@@ -20,10 +20,11 @@ class EventBus:
         return self.subscribers
 
 
-event_bus = EventBus()
+if __name__ == "__main__":
+    event_bus = EventBus()
 
-def my_listener(data):
-    print(f"Το φως άναψε! Δεδομένα: {data}")
+    def my_listener(data):
+        print(f"Το φως άναψε! Δεδομένα: {data}")
 
-event_bus.subscribe("light_turned_on", my_listener)
-event_bus.publish("light_turned_on", {"device_id": "light_1", "status": "on"})
+    event_bus.subscribe("light_turned_on", my_listener)
+    event_bus.publish("light_turned_on", {"device_id": "light_1", "status": "on"})
