@@ -5,10 +5,12 @@ import uvicorn
 from core.event_bus import EventBus
 from drivers.tapo_light import TapoLight
 from fastapi import FastAPI, HTTPException
+from fastapi.staticfiles import StaticFiles
 from models.device_models import ControlLightDevice
 from fastapi.responses import FileResponse
 
 app = FastAPI()
+app.mount("/static", StaticFiles(directory="static"), name="static")
 event_bus = EventBus()
 devices_db = {}
 
