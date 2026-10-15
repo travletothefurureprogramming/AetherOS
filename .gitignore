@@ -1,2 +1,3 @@
 /__pcache__
 *pyc
+*.env
