@@ -14,12 +14,27 @@ class TapoLight(BaseDevice):
     self.ip_address = ip_address
 
   @classmethod
-  async def create(cls, device_id: str, ip_address: str):
+  async def create(cls, device_id: str, ip_address: str, dev_type: str):
     tapo_username = os.getenv("TAPO_USERNAME")
     tapo_password = os.getenv("TAPO_PASSWORD")
 
     client = ApiClient(tapo_username, tapo_password)
-    device_obj = await client.l900(ip_address)
+    if dev_type == "tapo_l900":
+      device_obj = await client.l900(ip_address)
+    elif dev_type == "tapo_l920":
+      device_obj = await client.l920(ip_address)
+    elif dev_type == "tapo_l930":
+      device_obj = await client.l930(ip_address)
+    elif dev_type == "tapo_l530":
+      device_obj = await client.l530(ip_address)
+    elif dev_type == "tapo_l535":
+      device_obj = await client.l535(ip_address)
+    elif dev_type == "tapo_l510":
+      device_obj = await client.l510(ip_address)
+    elif dev_type == "tapo_l630":
+      device_obj = await client.l630(ip_address)
+    elif dev_type == "tapo_l610":
+      device_obj = await client.l610(ip_address)
 
     return cls(device_id, device_obj, ip_address)
 

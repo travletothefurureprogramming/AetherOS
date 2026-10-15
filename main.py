@@ -13,6 +13,7 @@ devices_db = {}
 @app.post("/api/light/control")
 async def control_light(command: ControlLightDevice):
     device_id = command.device_id
+    dev_type = command.dev_type
     action = command.action
     value = command.value
     triggered_by = command.triggered_by
@@ -26,7 +27,7 @@ async def control_light(command: ControlLightDevice):
             )
 
         try:
-            devices_db[device_id] = await TapoLight.create(device_id, ip_address)
+            devices_db[device_id] = await TapoLight.create(device_id, ip_address, dev_type)
         except Exception as e:
             raise HTTPException(
                 status_code=502,
@@ -50,6 +51,7 @@ async def control_light(command: ControlLightDevice):
             f"{device_id}_{action}",
             {
             "device_id": device_id,
+            "dev_type": dev_type,
             "action": action,
             "value": value,
             "triggered_by": triggered_by,
