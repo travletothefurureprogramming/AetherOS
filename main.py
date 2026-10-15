@@ -1,5 +1,6 @@
 import json
 import os
+import uvicorn
 from core.event_bus import EventBus
 from drivers.tapo_light import TapoLight
 from fastapi import FastAPI, HTTPException
@@ -14,7 +15,6 @@ DB_FILE = os.path.join(CONFIG_DIR, "devices.json")
 
 
 def load_registered_devices():
-  """Φορτώνει όλες τις εγγεγραμμένες συσκευές από το JSON."""
   if not os.path.exists(DB_FILE):
     return []
 
@@ -27,12 +27,23 @@ def load_registered_devices():
 
 
 def get_device_from_registry(device_id: str):
-  """Βρίσκει μια συγκεκριμένη συσκευή από το αρχείο registry με βάση το ID της."""
   devices = load_registered_devices()
   for dev in devices:
     if dev.get("device_id") == device_id:
       return dev
   return None
+
+
+@app.get("/api/devices")
+async def get_devices():
+  devices = load_registered_devices()
+  sanitized_devices = []
+  for dev in devices:
+    dev_copy = dev.copy()
+    if "auth" in dev_copy:
+      dev_copy["auth"] = {"email": dev_copy["auth"].get("email"), "password": "[PROTECTED]"}
+    sanitized_devices.append(dev_copy)
+  return sanitized_devices
 
 
 @app.post("/api/light/control")
@@ -47,23 +58,22 @@ async def control_light(command: ControlLightDevice):
   if not device_config:
     raise HTTPException(
         status_code=404,
-        detail=(
-            f"Device '{device_id}' not found in registry. Please register it"
-            " first."
-        ),
+        detail=f"Device '{device_id}' not found in registry. Please register it first.",
     )
 
   ip_address = device_config.get("ip_address")
   brand = device_config.get("brand")
 
-  auth_data = device_config.get("auth", {})
-  email = auth_data.get("email")
-  password = auth_data.get("password")
+  email, password = None, None
+  if "tapo" in dev_type.lower() or brand == "Tapo":
+    auth_data = device_config.get("auth", {})
+    email = auth_data.get("email")
+    password = auth_data.get("password")
 
   if device_id not in devices_db:
     try:
       devices_db[device_id] = await TapoLight.create(
-          device_id, ip_address, dev_type
+          device_id, ip_address, dev_type, email, password
       )
     except Exception as e:
       raise HTTPException(
@@ -73,16 +83,45 @@ async def control_light(command: ControlLightDevice):
 
   device = devices_db[device_id]
 
-  if action == "turn_on":
-    await device.turn_on()
-  elif action == "turn_off":
-    await device.turn_off()
-  elif action == "set_colour":
-    await device.set_colour(value)
-  elif action == "set_brightness":  
-    await device.set_brightness(value)
-  else:
-    raise HTTPException(status_code=400, detail="Unknown action")
+  try:
+    if action == "turn_on":
+      await device.turn_on()
+    elif action == "turn_off":
+      await device.turn_off()
+    elif action == "set_colour":
+      await device.set_colour(value)
+    elif action == "set_brightness":
+      await device.set_brightness(value)
+    else:
+      raise HTTPException(status_code=400, detail="Unknown action")
+
+  except Exception as e:
+    error_str = str(e)
+    if "SESSION_TIMEOUT" in error_str or "Unauthorized" in error_str:
+      if device_id in devices_db:
+        del devices_db[device_id]
+      
+      try:
+        devices_db[device_id] = await TapoLight.create(
+            device_id, ip_address, dev_type, email, password
+        )
+        device = devices_db[device_id]
+        
+        if action == "turn_on":
+          await device.turn_on()
+        elif action == "turn_off":
+          await device.turn_off()
+        elif action == "set_colour":
+          await device.set_colour(value)
+        elif action == "set_brightness":
+          await device.set_brightness(value)
+      except Exception as inner_e:
+        raise HTTPException(
+            status_code=502,
+            detail=f"Session expired and auto-reconnect failed: {str(inner_e)}",
+        )
+    else:
+      raise HTTPException(status_code=500, detail=f"Device error: {error_str}")
 
   await event_bus.publish(
       f"{device_id}_{action}",
@@ -108,25 +147,26 @@ def main():
 
   if not devices:
     print("Καμία συσκευή δεν είναι καταχωρισμένη.")
-    return
+  else:
+    print(f"Βρέθηκαν συνολικά {len(devices)} συσκευές στο registry.\n")
+    for device in devices:
+      device_id = device.get("device_id")
+      brand = device.get("brand")
+      device_type = device.get("device_type")
+      ip_address = device.get("ip_address")
 
-  print(f"Βρέθηκαν συνολικά {len(devices)} συσκευές στο registry.\n")
+      print(f"-> Συσκευή ID: {device_id}")
+      print(f"   Μάρκα: {brand} | Τύπος: {device_type}")
+      print(f"   IP Address: {ip_address}")
 
-  for device in devices:
-    device_id = device.get("device_id")
-    brand = device.get("brand")
-    device_type = device.get("device_type")
-    ip_address = device.get("ip_address")
+      if brand == "Tapo" and "auth" in device:
+        email = device["auth"].get("email")
+        print(f"   [Auth] Email: {email} | Password: [PROTECTED]")
 
-    print(f"-> Συσκευή ID: {device_id}")
-    print(f"   Μάρκα: {brand} | Τύπος: {device_type}")
-    print(f"   IP Address: {ip_address}")
+      print("-" * 40)
 
-    if brand == "Tapo" and "auth" in device:
-      email = device["auth"].get("email")
-      print(f"   [Auth] Email: {email} | Password: [PROTECTED]")
-
-    print("-" * 40)
+  print("\n[🚀] Starting Uvicorn Server on http://0.0.0.0:8080 ...")
+  uvicorn.run(app, host="0.0.0.0", port=8080)
 
 
 if __name__ == "__main__":
