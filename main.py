@@ -5,6 +5,7 @@ from core.event_bus import EventBus
 from drivers.tapo_light import TapoLight
 from fastapi import FastAPI, HTTPException
 from models.device_models import ControlLightDevice
+from fastapi.responses import FileResponse
 
 app = FastAPI()
 event_bus = EventBus()
@@ -33,6 +34,9 @@ def get_device_from_registry(device_id: str):
       return dev
   return None
 
+@app.get("/")
+async def serve_dashboard():
+    return FileResponse("static/index.html")
 
 @app.get("/api/devices")
 async def get_devices():

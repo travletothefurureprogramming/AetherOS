@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="el">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AetherOS Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['"Plus Jakarta Sans"', 'sans-serif'],
+                    },
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-[#09090b] text-zinc-100 min-h-screen selection:bg-zinc-800 selection:text-white">
+    <div class="max-w-5xl mx-auto px-6 py-10">
+        <!-- Header -->
+        <header class="flex justify-between items-center mb-10 pb-6 border-b border-zinc-800/60">
+            <div class="flex items-center gap-3">
+                <div class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></div>
+                <h1 class="text-lg font-semibold tracking-tight text-zinc-100">AetherOS</h1>
+            </div>
+            <div class="flex items-center gap-4">
+                <span class="text-xs text-zinc-400 font-medium px-3 py-1 rounded-full bg-zinc-900 border border-zinc-800">Local Hub</span>
+                <button onclick="fetchDevices()" class="text-xs font-medium text-zinc-300 bg-zinc-900 hover:bg-zinc-800 hover:text-white border border-zinc-800 px-3.5 py-1.5 rounded-lg transition-all duration-200 flex items-center gap-2">
+                    <svg class="w-3.5 h-3.5 text-zinc-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+                    Refresh
+                </button>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main>
+            <div class="mb-6 flex justify-between items-center">
+                <h2 class="text-sm font-semibold tracking-wide uppercase text-zinc-400">Connected Devices</h2>
+                <span id="device-count" class="text-xs text-zinc-500">0 online</span>
+            </div>
+
+            <div id="devices-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <div class="text-zinc-500 col-span-full text-center py-12 text-sm">Loading registry...</div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        async function fetchDevices() {
+            const container = document.getElementById('devices-container');
+            const countBadge = document.getElementById('device-count');
+            
+            try {
+                const response = await fetch('/api/devices');
+                const devices = await response.json();
+
+                countBadge.textContent = `${devices.length} registered`;
+
+                if (devices.length === 0) {
+                    container.innerHTML = '<div class="text-zinc-500 col-span-full text-center py-12 text-sm border border-dashed border-zinc-800 rounded-xl">No devices found in registry.</div>';
+                    return;
+                }
+
+                container.innerHTML = '';
+                devices.forEach(device => {
+                    const card = document.createElement('div');
+                    card.className = 'group bg-[#121215] border border-zinc-800/80 rounded-xl p-5 hover:border-zinc-700/80 transition-all duration-200 flex flex-col justify-between shadow-sm';
+                    
+                    card.innerHTML = `
+                        <div>
+                            <div class="flex justify-between items-start mb-3">
+                                <h3 class="font-medium text-sm text-zinc-200 tracking-tight">${device.device_id}</h3>
+                                <span class="text-[10px] font-medium uppercase tracking-wider text-zinc-400 bg-zinc-800/60 border border-zinc-700/40 px-2 py-0.5 rounded">${device.brand}</span>
+                            </div>
+                            <div class="space-y-1 mb-6">
+                                <div class="flex justify-between text-xs">
+                                    <span class="text-zinc-500">Type</span>
+                                    <span class="text-zinc-300 font-mono">${device.device_type}</span>
+                                </div>
+                                <div class="flex justify-between text-xs">
+                                    <span class="text-zinc-500">IP Address</span>
+                                    <span class="text-zinc-300 font-mono">${device.ip_address}</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-2 gap-2 pt-3 border-t border-zinc-800/50">
+                            <button onclick="controlDevice('${device.device_id}', '${device.device_type}', 'turn_on')" class="w-full bg-zinc-800 hover:bg-zinc-700 text-zinc-200 hover:text-white text-xs font-medium py-2 rounded-lg transition-colors border border-zinc-700/50">Turn On</button>
+                            <button onclick="controlDevice('${device.device_id}', '${device.device_type}', 'turn_off')" class="w-full bg-zinc-900 hover:bg-zinc-800 text-zinc-400 hover:text-zinc-200 text-xs font-medium py-2 rounded-lg transition-colors border border-zinc-800">Turn Off</button>
+                        </div>
+                    `;
+                    container.appendChild(card);
+                });
+            } catch (error) {
+                container.innerHTML = '<div class="text-rose-400 col-span-full text-center py-12 text-sm">Failed to establish connection with server.</div>';
+                console.error(error);
+            }
+        }
+
+        async function controlDevice(deviceId, devType, action) {
+            try {
+                const response = await fetch('/api/light/control', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        device_id: deviceId,
+                        dev_type: devType,
+                        action: action,
+                        value: null,
+                        triggered_by: 'web_dashboard'
+                    })
+                });
+
+                const result = await response.json();
+                if (!response.ok) {
+                    alert('Error: ' + (result.detail || 'Failed to execute action'));
+                }
+            } catch (error) {
+                alert('Network error while controlling device.');
+                console.error(error);
+            }
+        }
+
+        fetchDevices();
+    </script>
+</body>
+</html>
