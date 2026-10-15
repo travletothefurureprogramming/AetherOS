@@ -1,6 +1,7 @@
 import json
 import os
 import questionary
+from main import uvicorn, app, get_local_ip
 
 CONFIG_DIR = "cfg"
 DB_FILE = os.path.join(CONFIG_DIR, "devices.json")
@@ -143,6 +144,8 @@ def main():
 
     elif choice == "🚀 Start API Server":
       print("\n[+] Starting API Server...")
+      print(f"\n[🚀] Starting Uvicorn Server on http://127.0.0.1:8080 and http://{get_local_ip()}:8080 ...")
+      uvicorn.run(app, host="0.0.0.0", port=8080)
       break
 
     elif choice == "❌ Exit" or choice is None:
