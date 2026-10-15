@@ -19,7 +19,7 @@ class ControlLightDevice(BaseModel):
         "tapo_l920",
         "tapo_l930",
     ]    
-    action: Literal["turn_on", "turn_off", "set_colour", "set_brighness"]
+    action: Literal["turn_on", "turn_off", "set_colour", "set_brightness"]
     value: Union[str, int, None] = Field(default=None)
     triggered_by: str = Field(default="user")
 
