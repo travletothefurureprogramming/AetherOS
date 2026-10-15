@@ -3,7 +3,7 @@ from tapo import ApiClient
 from dotenv import load_dotenv
 import os
 
-load_dotenv()
+load_dotenv("/cfg/.env")
 
 
 class TapoLight(BaseDevice):
