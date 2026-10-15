@@ -7,7 +7,6 @@ DB_FILE = os.path.join(CONFIG_DIR, "devices.json")
 
 
 def ensure_config_dir():
-  """Δημιουργεί τον φάκελο cfg αν δεν υπάρχει già."""
   if not os.path.exists(CONFIG_DIR):
     os.makedirs(CONFIG_DIR)
 
