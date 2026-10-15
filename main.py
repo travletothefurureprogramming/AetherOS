@@ -1,5 +1,6 @@
 import json
 import os
+import socket
 import uvicorn
 from core.event_bus import EventBus
 from drivers.tapo_light import TapoLight
@@ -33,6 +34,17 @@ def get_device_from_registry(device_id: str):
     if dev.get("device_id") == device_id:
       return dev
   return None
+
+def get_local_ip():
+  s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+  try:
+    s.connect(("8.8.8.8", 80))
+    local_ip = s.getsockname()[0]
+  except Exception:
+    local_ip = "127.0.0.1"
+  finally:
+    s.close()
+  return local_ip
 
 @app.get("/")
 async def serve_dashboard():
@@ -169,7 +181,7 @@ def main():
 
       print("-" * 40)
 
-  print("\n[🚀] Starting Uvicorn Server on http://0.0.0.0:8080 ...")
+  print(f"\n[🚀] Starting Uvicorn Server on http://127.0.0.1:8080 and http://{get_local_ip()} ...")
   uvicorn.run(app, host="0.0.0.0", port=8080)
 
 
