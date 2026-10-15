@@ -181,7 +181,7 @@ def main():
 
       print("-" * 40)
 
-  print(f"\n[🚀] Starting Uvicorn Server on http://127.0.0.1:8080 and http://{get_local_ip()} ...")
+  print(f"\n[🚀] Starting Uvicorn Server on http://127.0.0.1:8080 and http://{get_local_ip()}:8080 ...")
   uvicorn.run(app, host="0.0.0.0", port=8080)
 
 
