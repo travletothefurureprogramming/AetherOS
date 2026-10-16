@@ -5,3 +5,4 @@ cfg/devices.json
 *.spec
 /build
 /dist
+*.zip
