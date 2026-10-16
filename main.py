@@ -4,9 +4,10 @@ import socket
 import uvicorn
 from core.event_bus import EventBus
 from drivers.tapo_light import TapoLight
+from drivers.tapo_plug import TapoPlug
 from fastapi import FastAPI, HTTPException
 from fastapi.staticfiles import StaticFiles
-from models.device_models import ControlLightDevice
+from models.device_models import ControlLightDevice, ControlPlugDevice, ControlTVDevice
 from fastapi.responses import FileResponse
 from drivers.yeelight_light import Yeelight_Light
 
@@ -168,6 +169,91 @@ async def control_light(command: ControlLightDevice):
       "message": f"Executed {action} on {device_id}",
   }
 
+
+@app.post("/api/plug/control")
+async def control_plug(command: ControlPlugDevice):
+  device_id = command.device_id
+  dev_type = command.dev_type
+  action = command.action
+  value = command.value
+  triggered_by = command.triggered_by
+
+  device_config = get_device_from_registry(device_id)
+  if not device_config:
+    raise HTTPException(
+        status_code=404,
+        detail=f"Device '{device_id}' not found in registry. Please register it first.",
+    )
+
+  ip_address = device_config.get("ip_address")
+  brand = device_config.get("brand")
+
+  email, password = None, None
+  if "tapo" in dev_type.lower() or brand == "Tapo":
+    auth_data = device_config.get("auth", {})
+    email = auth_data.get("email")
+    password = auth_data.get("password")
+  if device_id not in devices_db:
+    if dev_type.lower() in ["tapo_p100", "tapo_p110", "tapo_p115"] or "tapo" in dev_type.lower():        
+        try:
+          devices_db[device_id] = await TapoPlug.create(
+           device_id, ip_address, dev_type, email, password
+          )
+        except Exception as e:
+          raise HTTPException(
+            status_code=502,
+            detail=f"Could not connect to physical device {device_id}: {str(e)}",
+          )
+
+  device = devices_db[device_id]
+
+  try:
+    if action == "turn_on":
+      await device.turn_on()
+    elif action == "turn_off":
+      await device.turn_off()
+    else:
+      raise HTTPException(status_code=400, detail="Unknown action")
+
+  except Exception as e:
+    error_str = str(e)
+    if "SESSION_TIMEOUT" in error_str or "Unauthorized" in error_str:
+      if device_id in devices_db:
+        del devices_db[device_id]
+      
+      try:
+        devices_db[device_id] = await TapoPlug.create(
+            device_id, ip_address, dev_type, email, password
+        )
+        device = devices_db[device_id]
+        
+        if action == "turn_on":
+          await device.turn_on()
+        elif action == "turn_off":
+          await device.turn_off()
+      except Exception as inner_e:
+        raise HTTPException(
+            status_code=502,
+            detail=f"Session expired and auto-reconnect failed: {str(inner_e)}",
+        )
+    else:
+      raise HTTPException(status_code=500, detail=f"Device error: {error_str}")
+
+  await event_bus.publish(
+      f"{device_id}_{action}",
+      {
+          "device_id": device_id,
+          "dev_type": dev_type,
+          "action": action,
+          "value": value,
+          "triggered_by": triggered_by,
+      },
+  )
+
+  return {
+      "status": "success",
+      "message": f"Executed {action} on {device_id}",
+  }
 
 def main():
   print("--- AetherOS Core / API Loader ---")

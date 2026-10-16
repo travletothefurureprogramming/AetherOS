@@ -65,6 +65,16 @@ class ControlLightDevice(BaseModel):
     value: Union[str, int, None] = Field(default=None)
     triggered_by: str = Field(default="user")
 
+class ControlPlugDevice(BaseModel):
+    device_id: str
+    dev_type: Literal[
+        "p100", 
+        "p110", 
+        "p115"
+        ]
+    action: Literal["turn_on", "turn_off"]
+    triggersd_by: str = Field(default="user")
+
 class ControlTVDevice(BaseModel):
     device_id: str
     action: Literal["turn_on", "turn_off", "set_volume", "volume_up", "volume_down"]
