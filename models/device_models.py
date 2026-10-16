@@ -1,5 +1,6 @@
 from pydantic import BaseModel, Field
 from typing import Literal, Union
+from typing import Optional, Any
 
 class DeviceState(BaseModel):
     device_id: str
@@ -77,8 +78,9 @@ class ControlPlugDevice(BaseModel):
 
 class ControlTVDevice(BaseModel):
     device_id: str
-    action: Literal["turn_on", "turn_off", "set_volume", "volume_up", "volume_down"]
-    value: Union[int, str] = Field(default=None)
+    action: Literal["turn_on", "turn_off", "set_volume", "volume_up", "volume_down", "play", "pause", "stop"]
+    dev_type: str
+    value: Optional[Any] = None
     triggered_by: str = Field(default="user")
 
 

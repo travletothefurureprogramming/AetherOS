@@ -70,7 +70,7 @@
                     const card = document.createElement('div');
                     card.className = 'group bg-[#121215] border border-zinc-800/80 rounded-xl p-5 hover:border-zinc-700/80 transition-all duration-200 flex flex-col justify-between shadow-sm';
                     
-                    const isTv = device.device_type === 'lg_tv' || device.brand === 'LG';
+                    const isTv = device.device_type === 'lg_tv' || device.brand === 'LG' || device.brand === 'Lg';
 
                     let controlsHTML = '';
                     if (isTv) {
@@ -128,7 +128,14 @@
 
         async function controlDevice(deviceId, devType, action) {
             try {
-                const endpoint = (devType === 'lg_tv') ? '/api/tv/control' : '/api/light/control';
+                let endpoint = '/api/light/control';
+                const dt = devType.toLowerCase();
+
+                if (dt === 'lg_tv') {
+                    endpoint = '/api/tv/control';
+                } else if (dt.includes('plug') || dt.includes('p100') || dt.includes('p110') || dt.includes('p115')) {
+                    endpoint = '/api/plug/control';
+                }
 
                 const response = await fetch(endpoint, {
                     method: 'POST',
@@ -144,7 +151,13 @@
 
                 const result = await response.json();
                 if (!response.ok) {
-                    alert('Error: ' + (result.detail || 'Failed to execute action'));
+                    let errorMsg = result.detail;
+                    if (Array.isArray(errorMsg)) {
+                        errorMsg = errorMsg.map(err => err.msg || JSON.stringify(err)).join(', ');
+                    } else if (typeof errorMsg === 'object' && errorMsg !== null) {
+                        errorMsg = JSON.stringify(errorMsg);
+                    }
+                    alert('Error: ' + (errorMsg || 'Failed to execute action'));
                 }
             } catch (error) {
                 alert('Network error while controlling device.');
