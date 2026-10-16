@@ -153,7 +153,7 @@ def main():
             elif device_type == "📺 TV":
                 brand = questionary.select(
                     "Select TV brand:",
-                    choices=["LG webOS"],
+                    choices=["LG webOS", "Samsung"],
                     style=questionary.Style([
                         ("pointer", "fg:cyan bold"),
                         ("highlighted", "fg:cyan bold"),
@@ -168,10 +168,11 @@ def main():
                 ).ask()
 
                 if device_id and ip_address:
+                    is_samsung = brand == "Samsung"
                     new_device = {
                         "device_id": device_id,
-                        "device_type": "lg_tv",
-                        "brand": "LG",
+                        "device_type": "samsung_tv" if is_samsung else "lg_tv",
+                        "brand": "Samsung" if is_samsung else "LG",
                         "ip_address": ip_address,
                     }
                     save_device(new_device)

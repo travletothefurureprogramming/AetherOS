@@ -5,6 +5,7 @@ import uvicorn
 from core.event_bus import EventBus
 from drivers.tapo_light import TapoLight
 from drivers.lg_driver import WebOSTv
+from drivers.samsung_driver import SamsungTV
 from drivers.tapo_plug import TapoPlug
 from fastapi import FastAPI, HTTPException
 from fastapi.staticfiles import StaticFiles
@@ -255,7 +256,6 @@ async def control_plug(command: ControlPlugDevice):
       "status": "success",
       "message": f"Executed {action} on {device_id}",
   }
-
 @app.post("/api/tv/control")
 async def control_tv(command: ControlTVDevice):
   device_id = command.device_id
@@ -274,92 +274,78 @@ async def control_tv(command: ControlTVDevice):
   ip_address = device_config.get("ip_address")
   brand = device_config.get("brand")
 
+  # 1. Αρχικοποίηση συσκευής αν δεν υπάρχει στη μνήμη
   if device_id not in devices_db:
-    if "lg" in dev_type.lower() or brand == "Lg":        
+    if "lg" in dev_type.lower() or brand in ["Lg", "LG"]:        
         try:
-          devices_db[device_id] = WebOSTv(
-           device_id, ip_address, dev_type
-          )
-          await devices_db[device_id].connect()
+          tv_instance = WebOSTv(device_id, ip_address, dev_type)
+          await tv_instance.connect()
+          devices_db[device_id] = tv_instance
         except Exception as e:
-          raise HTTPException(
-            status_code=502,
-            detail=f"Could not connect to physical device {device_id}: {str(e)}",
-          )
+          raise HTTPException(status_code=502, detail=f"Could not connect to LG TV {device_id}: {str(e)}")
+          
+    elif "samsung" in dev_type.lower() or brand in ["Samsung", "samsung"]:
+        try:
+          # Η Samsung είναι sync, δεν θέλει await
+          devices_db[device_id] = SamsungTV(device_id, ip_address, dev_type)
+        except Exception as e:
+          raise HTTPException(status_code=502, detail=f"Could not connect to Samsung TV {device_id}: {str(e)}")
+    else:
+        raise HTTPException(status_code=400, detail=f"Unknown TV brand/type: {brand}")
 
   device = devices_db[device_id]
 
+  # 2. Εκτέλεση ενέργειας ανάλογα με τη μάρκα
   try:
-    if action == "turn_on":
-        await device.turn_on()
-    elif action == "turn_off":
-        await device.turn_off()
-    elif action == "play":
-        await device.play()
-    elif action == "pause":
-        await device.pause()
-    elif action == "stop":
-        await device.stop()
-    elif action == "volume_up":
-        await device.volume_up()
-    elif action == "volume_down":
-        await device.volume_down()
-    elif action == "fast_forward":
-        await device.fast_forward()
-    elif action == "rewind":
-        await device.rewind()
-    elif action == "select_source":
-        source = command.value
-        await device.select_source(source)
-        
-    else:
-        raise HTTPException(status_code=400, detail="Unknown action")
+    if brand in ["Lg", "LG"] or "lg" in dev_type.lower():
+      if action == "turn_on":
+          await device.turn_on()
+      elif action == "turn_off":
+          await device.turn_off()
+      elif action == "play":
+          await device.play()
+      elif action == "pause":
+          await device.pause()
+      elif action == "stop":
+          await device.stop()
+      elif action == "volume_up":
+          await device.volume_up()
+      elif action == "volume_down":
+          await device.volume_down()
+      elif action == "fast_forward":
+          await device.fast_forward()
+      elif action == "rewind":
+          await device.rewind()
+      elif action == "select_source":
+          await device.select_source(value)
+      else:
+          raise HTTPException(status_code=400, detail="Unknown action")
+          
+    else: # Samsung (Sync)
+      if action == "turn_on":
+          device.turn_on()
+      elif action == "turn_off":
+          device.turn_off()
+      elif action == "play":
+          device.play()
+      elif action == "pause":
+          device.pause()
+      elif action == "stop":
+          device.stop()
+      elif action == "volume_up":
+          device.volume_up()
+      elif action == "volume_down":
+          device.volume_down()
+      elif action == "select_source":
+          device.select_source(value)
+      else:
+          raise HTTPException(status_code=400, detail="Unknown action")
 
   except Exception as e:
-    error_str = str(e)
-    if "SESSION_TIMEOUT" in error_str or "Unauthorized" in error_str:
-      if device_id in devices_db:
-        del devices_db[device_id]
-      
-      try:
-        devices_db[device_id] = await WebOSTv(
-            device_id, ip_address, dev_type
-        )
-
-        device = devices_db[device_id]
-        await devices_db[device_id].connect()
-
-        if action == "turn_on":
-          await device.turn_on()
-        elif action == "turn_off":
-          await device.turn_off()
-        elif action == "play":
-          await device.play()
-        elif action == "pause":
-          await device.pause()
-        elif action == "stop":
-          await device.stop()
-        elif action == "volume_up":
-          await device.volume_up()
-        elif action == "volume_down":
-          await device.volume_down()
-        elif action == "fast_forward":
-          await device.fast_forward()
-        elif action == "rewind":
-          await device.rewind()
-        elif action == "select_source":
-          source = command.value
-          await device.select_source(source)
-        
-        else:
-          raise HTTPException(status_code=400, detail="Unknown action")
-      except Exception as inner_e:
-        raise HTTPException(
-            status_code=502,
-            detail=f"Session expired and auto-reconnect failed: {str(inner_e)}",
-        )
-    else:
-      raise HTTPException(status_code=500, detail=f"Device error: {error_str}")
+    # Ανάλογα με το σφάλμα, καθαρίζουμε το cache αν χρειαστεί
+    if device_id in devices_db:
+      del devices_db[device_id]
+    raise HTTPException(status_code=500, detail=f"TV execution error: {str(e)}")
 
   await event_bus.publish(
       f"{device_id}_{action}",
