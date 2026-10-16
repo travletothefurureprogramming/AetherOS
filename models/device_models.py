@@ -78,7 +78,7 @@ class ControlPlugDevice(BaseModel):
 class ControlTVDevice(BaseModel):
     device_id: str
     action: Literal["turn_on", "turn_off", "set_volume", "volume_up", "volume_down"]
-    value: Union[int, None] = Field(default=None)
+    value: Union[int, str] = Field(default=None)
     triggered_by: str = Field(default="user")
 
 

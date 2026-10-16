@@ -6,3 +6,4 @@ cfg/devices.json
 /build
 /dist
 *.zip
+*.sqlite
