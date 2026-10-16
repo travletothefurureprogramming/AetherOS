@@ -8,6 +8,7 @@ from fastapi import FastAPI, HTTPException
 from fastapi.staticfiles import StaticFiles
 from models.device_models import ControlLightDevice
 from fastapi.responses import FileResponse
+from drivers.yeelight_light import Yeelight_Light
 
 app = FastAPI()
 app.mount("/static", StaticFiles(directory="static"), name="static")
@@ -89,15 +90,25 @@ async def control_light(command: ControlLightDevice):
     password = auth_data.get("password")
 
   if device_id not in devices_db:
-    try:
-      devices_db[device_id] = await TapoLight.create(
-          device_id, ip_address, dev_type, email, password
-      )
-    except Exception as e:
-      raise HTTPException(
+    if brand == "Yeelight" or dev_type.startswith("yee_"):
+      try:
+        devices_db[device_id] = Yeelight_Light(device_id, ip_address, dev_type)
+      except Exception as e:
+        print(f"Could not connect to physical device {device_id}: {str(e)}")
+        raise HTTPException(
           status_code=502,
           detail=f"Could not connect to physical device {device_id}: {str(e)}",
-      )
+        )
+    else:
+      try:
+        devices_db[device_id] = await TapoLight.create(
+          device_id, ip_address, dev_type, email, password
+        )
+      except Exception as e:
+        raise HTTPException(
+          status_code=502,
+          detail=f"Could not connect to physical device {device_id}: {str(e)}",
+        )
 
   device = devices_db[device_id]
 

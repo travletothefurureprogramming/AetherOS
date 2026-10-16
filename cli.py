@@ -39,7 +39,7 @@ def main():
     print("""
     ╔══════════════════════════════════════╗
     ║               AetherOS               ║
-    ║       Local-First IoT Hub v1.0       ║
+    ║        Local-First IoT Hub v1.0      ║
     ╚══════════════════════════════════════╝
     """)
 
@@ -99,6 +99,30 @@ def main():
                 choices=["tapo_p100", "tapo_p110", "tapo_p115"],
             ).ask()
 
+        elif brand == "Yeelight":
+          if device_type == "💡 Light":
+            model = questionary.select(
+                "Select Yeelight model:",
+                choices=[
+                    "yee_mono",
+                    "yee_mono1",
+                    "yee_mono5",
+                    "yee_color1",
+                    "yee_color2",
+                    "yee_color4",
+                    "yee_color5",
+                    "yee_colorc",
+                    "yee_strip1",
+                    "yee_strip4",
+                    "yee_strip6",
+                    "yee_lamp15",
+                    "yee_bslamp1",
+                    "yee_ceiling1",
+                    "yee_ceiling3",
+                    "yee_ceiling4",
+                ],
+            ).ask()
+
         device_id = questionary.text(
             "Enter unique Device ID (e.g. living_room_light):"
         ).ask()
@@ -108,6 +132,7 @@ def main():
 
         email = None
         password = None
+        # Τα credentials αφορούν μόνο την Tapo
         if brand == "Tapo":
           email = questionary.text("Enter Tapo Account Email:").ask()
           password = questionary.password("Enter Tapo Account Password:").ask()
