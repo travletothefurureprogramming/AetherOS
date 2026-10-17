@@ -70,7 +70,7 @@ def main():
             if device_type in ["💡 Light", "⚡ Plug"]:
                 brand = questionary.select(
                     "Select brand:",
-                    choices=["Tapo", "Tuya", "Yeelight", "Shelly"],
+                    choices=["Tapo", "Tuya", "Yeelight", "Shelly", "Phue"],
                     style=questionary.Style([
                         ("pointer", "fg:cyan bold"),
                         ("highlighted", "fg:cyan bold"),
@@ -122,6 +122,17 @@ def main():
                                 "yee_ceiling4",
                             ],
                         ).ask()
+                
+                elif brand == "Shelly":
+                    if device_type == "💡 Light":
+                        model = questionary.select(
+                            "Select Shelly model:",
+                            choices=["shelly_1", "shelly_1pm", "shelly_2", "shelly_2.5"],
+                        ).ask()
+
+                elif brand == "Phue":
+                    if device_type == "💡 Light":
+                        model = "phue_light"
 
                 device_id = questionary.text(
                     "Enter unique Device ID (e.g. living_room_light):"
@@ -132,9 +143,26 @@ def main():
 
                 email = None
                 password = None
+                relay_number = None
+                device_number = None
+
                 if brand == "Tapo":
                     email = questionary.text("Enter Tapo Account Email:").ask()
                     password = questionary.password("Enter Tapo Account Password:").ask()
+                
+                elif brand == "Shelly":
+                    relay_input = questionary.text("Enter Shelly Relay Number (default 0):", default="0").ask()
+                    try:
+                        relay_number = int(relay_input)
+                    except ValueError:
+                        relay_number = 0
+
+                elif brand == "Phue":
+                    num_input = questionary.text("Enter Philips Hue Light Number / ID (e.g. 1):", default="1").ask()
+                    try:
+                        device_number = int(num_input)
+                    except ValueError:
+                        device_number = 1
 
                 if device_id and ip_address:
                     new_device = {
@@ -146,6 +174,10 @@ def main():
 
                     if brand == "Tapo":
                         new_device["auth"] = {"email": email, "password": password}
+                    elif brand == "Shelly":
+                        new_device["relay"] = relay_number
+                    elif brand == "Phue":
+                        new_device["number"] = device_number
 
                     save_device(new_device)
                     print(f"\n[✔] Device '{device_id}' successfully registered!")
@@ -188,9 +220,11 @@ def main():
             else:
                 for d in devices:
                     auth_info = " (Auth Configured)" if "auth" in d else ""
+                    relay_info = f" | Relay: {d['relay']}" if "relay" in d else ""
+                    number_info = f" | Number: {d['number']}" if "number" in d else ""
                     print(
                         f"• ID: {d['device_id']} | Brand: {d['brand']} | Type:"
-                        f" {d['device_type']} | IP: {d['ip_address']}{auth_info}"
+                        f" {d['device_type']} | IP: {d['ip_address']}{auth_info}{relay_info}{number_info}"
                     )
             input("\nPress Enter to continue...")
 

@@ -7,6 +7,7 @@ from drivers.tapo_light import TapoLight
 from drivers.lg_driver import WebOSTv
 from drivers.samsung_driver import SamsungTV
 from drivers.shelly_driver import Shelly
+from drivers.phue_driver import Phue
 from drivers.tapo_plug import TapoPlug
 from fastapi import FastAPI, HTTPException
 from fastapi.staticfiles import StaticFiles
@@ -96,6 +97,9 @@ async def control_light(command: ControlLightDevice):
   if "shelly" in dev_type.lower() or brand == "Shelly":
     relay_number = device_config.get("relay")
 
+  if "phue" in dev_type.lower() or brand == "Phue":
+    device_number = device_config.get("number")
+
   if device_id not in devices_db:
     if brand == "Yeelight" or dev_type.startswith("yee_"):
       try:
@@ -109,6 +113,15 @@ async def control_light(command: ControlLightDevice):
     elif brand == "Shelly" or dev_type.startswith("shell_"):
       try:
         devices_db[device_id] = Shelly(device_id,dev_type, ip_address, relay_number)
+      except Exception as e:
+        print(f"Could not connect to physical device {device_id}: {str(e)}")
+        raise HTTPException(
+          status_code=502,
+          detail=f"Could not connect to physical device {device_id}: {str(e)}",
+        )
+    elif brand == "Phue" or dev_type.startswith("phue_"):
+      try:
+        devices_db[device_id] = Phue(device_id,dev_type, ip_address, device_number)
       except Exception as e:
         print(f"Could not connect to physical device {device_id}: {str(e)}")
         raise HTTPException(
