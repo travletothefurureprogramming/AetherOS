@@ -1,5 +1,5 @@
 from phue import Bridge
-from base_device import BaseDevice
+from drivers.base_device import BaseDevice
 
 class Phue(BaseDevice):
     def __init__(self, device_id, dev_type, ip, device_number):
