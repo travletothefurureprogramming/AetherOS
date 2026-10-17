@@ -6,6 +6,7 @@ from core.event_bus import EventBus
 from drivers.tapo_light import TapoLight
 from drivers.lg_driver import WebOSTv
 from drivers.samsung_driver import SamsungTV
+from drivers.shelly_driver import Shelly
 from drivers.tapo_plug import TapoPlug
 from fastapi import FastAPI, HTTPException
 from fastapi.staticfiles import StaticFiles
@@ -92,10 +93,22 @@ async def control_light(command: ControlLightDevice):
     email = auth_data.get("email")
     password = auth_data.get("password")
 
+  if "shelly" in dev_type.lower() or brand == "Shelly":
+    relay_number = device_config.get("relay")
+
   if device_id not in devices_db:
     if brand == "Yeelight" or dev_type.startswith("yee_"):
       try:
         devices_db[device_id] = Yeelight_Light(device_id, ip_address, dev_type)
+      except Exception as e:
+        print(f"Could not connect to physical device {device_id}: {str(e)}")
+        raise HTTPException(
+          status_code=502,
+          detail=f"Could not connect to physical device {device_id}: {str(e)}",
+        )
+    elif brand == "Shelly" or dev_type.startswith("shell_"):
+      try:
+        devices_db[device_id] = Shelly(device_id,dev_type, ip_address, relay_number)
       except Exception as e:
         print(f"Could not connect to physical device {device_id}: {str(e)}")
         raise HTTPException(
@@ -134,9 +147,14 @@ async def control_light(command: ControlLightDevice):
         del devices_db[device_id]
       
       try:
-        devices_db[device_id] = await TapoLight.create(
-            device_id, ip_address, dev_type, email, password
-        )
+        if brand == "Tapo":
+          devices_db[device_id] = await TapoLight.create(
+              device_id, ip_address, dev_type, email, password
+          )
+        elif brand == "Shelly":
+          devices_db[device_id] = Shelly(device_id, dev_type, ip_address, relay_number)
+        elif brand == "Yeelight":
+          devices_db[device_id] = Yeelight_Light(device_id, ip_address, dev_type)
         device = devices_db[device_id]
         
         if action == "turn_on":
@@ -274,7 +292,6 @@ async def control_tv(command: ControlTVDevice):
   ip_address = device_config.get("ip_address")
   brand = device_config.get("brand")
 
-  # 1. Αρχικοποίηση συσκευής αν δεν υπάρχει στη μνήμη
   if device_id not in devices_db:
     if "lg" in dev_type.lower() or brand in ["Lg", "LG"]:        
         try:
@@ -286,7 +303,6 @@ async def control_tv(command: ControlTVDevice):
           
     elif "samsung" in dev_type.lower() or brand in ["Samsung", "samsung"]:
         try:
-          # Η Samsung είναι sync, δεν θέλει await
           devices_db[device_id] = SamsungTV(device_id, ip_address, dev_type)
         except Exception as e:
           raise HTTPException(status_code=502, detail=f"Could not connect to Samsung TV {device_id}: {str(e)}")
@@ -295,7 +311,6 @@ async def control_tv(command: ControlTVDevice):
 
   device = devices_db[device_id]
 
-  # 2. Εκτέλεση ενέργειας ανάλογα με τη μάρκα
   try:
     if brand in ["Lg", "LG"] or "lg" in dev_type.lower():
       if action == "turn_on":
@@ -321,7 +336,7 @@ async def control_tv(command: ControlTVDevice):
       else:
           raise HTTPException(status_code=400, detail="Unknown action")
           
-    else: # Samsung (Sync)
+    else: 
       if action == "turn_on":
           device.turn_on()
       elif action == "turn_off":
@@ -342,7 +357,6 @@ async def control_tv(command: ControlTVDevice):
           raise HTTPException(status_code=400, detail="Unknown action")
 
   except Exception as e:
-    # Ανάλογα με το σφάλμα, καθαρίζουμε το cache αν χρειαστεί
     if device_id in devices_db:
       del devices_db[device_id]
     raise HTTPException(status_code=500, detail=f"TV execution error: {str(e)}")
