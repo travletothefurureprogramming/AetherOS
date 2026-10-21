@@ -11,10 +11,11 @@ from drivers.phue_driver import Phue
 from drivers.tapo_plug import TapoPlug
 from fastapi import FastAPI, HTTPException
 from fastapi.staticfiles import StaticFiles
-from models.device_models import ControlLightDevice, ControlPlugDevice, ControlTVDevice
+from models.device_models import ControlLightDevice, ControlPlugDevice, ControlTVDevice, ControlAirConditionDevice
 from fastapi.responses import FileResponse
 from drivers.yeelight_light import Yeelight_Light
 from drivers.wiz_driver import WizLight
+from drivers.daikinac_driver import DaikinAc
 
 app = FastAPI()
 app.mount("/static", StaticFiles(directory="static"), name="static")
@@ -217,7 +218,6 @@ async def control_light(command: ControlLightDevice):
       "message": f"Executed {action} on {device_id}",
   }
 
-
 @app.post("/api/plug/control")
 async def control_plug(command: ControlPlugDevice):
   device_id = command.device_id
@@ -302,6 +302,7 @@ async def control_plug(command: ControlPlugDevice):
       "status": "success",
       "message": f"Executed {action} on {device_id}",
   }
+
 @app.post("/api/tv/control")
 async def control_tv(command: ControlTVDevice):
   device_id = command.device_id
@@ -405,6 +406,108 @@ async def control_tv(command: ControlTVDevice):
       "message": f"Executed {action} on {device_id}",
   }
 
+@app.get("/api/air-condition/state/{device_id}")
+async def get_state(device_id):
+  try:
+    device_config = get_device_from_registry(device_id)
+    if not device_config:
+      raise HTTPException(
+          status_code=404,
+          detail=f"Device '{device_id}' not found in registry. Please register it first.",
+      )
+
+    dev_type = device_config.get("device_type")
+    ip_address = device_config.get("ip_address")
+    brand = device_config.get("brand")
+
+    if device_id not in devices_db:
+      if brand == "Daikin" or dev_type.startswith("daikin_"):
+        devices_db[device_id] = DaikinAc(device_id, dev_type, ip_address)
+
+    device = devices_db[device_id]
+
+    return device.get_state()
+  except Exception as e:
+    return f"An error has occured: {e}"
+
+@app.post("/api/air-condition/control")
+async def control_air_condition(command: ControlAirConditionDevice):
+  device_id = command.device_id
+  dev_type = command.dev_type
+  action = command.action
+  value = command.value
+  triggered_by = command.triggered_by
+
+
+  device_config = get_device_from_registry(device_id)
+  if not device_config:
+    raise HTTPException(
+        status_code=404,
+        detail=f"Device '{device_id}' not found in registry. Please register it first.",
+    )
+
+  ip_address = device_config.get("ip_address")
+  brand = device_config.get("brand")
+
+  if device_id not in devices_db:
+    if brand == "Daikin" or dev_type.startswith("daikin_"):
+      devices_db[device_id] = DaikinAc(device_id, dev_type, ip_address)
+
+  device = devices_db[device_id]
+  try:
+    if action == "turn_on":
+      device.turn_on()
+    elif action == "turn_off":
+      device.turn_off()
+    elif action == "set_mode":
+      device.set_mode(value)
+    elif action == "set_temperature":
+      device.set_temperature(value)
+  except Exception as e:
+    error_str = str(e)
+    if "SESSION_TIMEOUT" in error_str or "Unauthorized" in error_str:
+      if device_id in devices_db:
+        del devices_db[device_id]
+      
+      try:
+        if brand == "Daikin" or dev_type.startswith("daikin_"):
+          devices_db[device_id] = DaikinAc(device_id, dev_type, ip_address)
+
+        device = devices_db[device_id]
+
+        if action == "turn_on":
+          device.turn_on()
+        elif action == "turn_off":
+          device.turn_off()
+        elif action == "set_mode":
+          device.set_mode(value)
+        elif action == "set_temperature":
+          device.set_temperature(value)
+
+      except Exception as inner_e:
+        raise HTTPException(
+            status_code=502,
+            detail=f"Session expired and auto-reconnect failed: {str(inner_e)}",
+        )
+    else:
+      raise HTTPException(status_code=500, detail=f"Device error: {error_str}")
+
+    await event_bus.publish(
+        f"{device_id}_{action}",
+        {
+            "device_id": device_id,
+            "dev_type": dev_type,
+            "action": action,
+            "value": value,
+            "triggered_by": triggered_by,
+        },
+    )
+
+    return {
+        "status": "success",
+        "message": f"Executed {action} on {device_id}",
+    }
+              
 def main():
   print("--- AetherOS Core / API Loader ---")
 

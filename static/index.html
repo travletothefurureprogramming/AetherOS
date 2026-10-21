@@ -58,7 +58,7 @@
         .device-meta {
             font-size: 11px;
             color: #6b7280;
-            margin-bottom: 16px;
+            margin-bottom: 12px;
         }
         .controls {
             display: flex;
@@ -79,11 +79,42 @@
             background: #333333;
             border-color: #404040;
         }
+        select {
+            background: #262626;
+            color: #e5e7eb;
+            border: 1px solid #333333;
+            padding: 6px;
+            font-size: 11px;
+            width: 100%;
+            margin-bottom: 8px;
+        }
         input[type=range] {
             width: 100%;
             margin-top: 8px;
             accent-color: #737373;
             background: #262626;
+        }
+        .temp-picker {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-top: 6px;
+            font-size: 11px;
+            color: #9ca3af;
+        }
+        .temp-picker input {
+            width: 50px;
+            background: #262626;
+            border: 1px solid #333333;
+            color: #f3f4f6;
+            padding: 4px;
+            text-align: center;
+            font-size: 11px;
+        }
+        .warning-text {
+            font-size: 10px;
+            color: #ef4444;
+            margin-top: 4px;
         }
         .empty {
             text-align: center;
@@ -124,9 +155,10 @@
                     const brand = (d.brand || '').toLowerCase();
                     const type = (d.device_type || '').toLowerCase();
                     const isTv = type.includes('tv') || brand === 'lg' || brand === 'samsung';
+                    const isAC = type.includes('daikin') || type.includes('ac') || brand === 'daikin';
                     const isPlug = type.includes('plug') || type.includes('p100') || type.includes('p110') || type.includes('p115');
                     const isRestricted = brand === 'shelly' || brand === 'phue' || type.includes('shelly') || type.includes('phue');
-                    const showBrightness = !isTv && !isPlug && !isRestricted;
+                    const showBrightness = !isTv && !isAC && !isPlug && !isRestricted;
 
                     const card = document.createElement('div');
                     card.className = 'card';
@@ -142,30 +174,51 @@
                     if (isTv) {
                         html += `
                             <div class="controls">
-                                <button onclick="send('${d.device_id}', '${d.device_type}', 'turn_on')">ON</button>
-                                <button onclick="send('${d.device_id}', '${d.device_type}', 'turn_off')">OFF</button>
+                                <button onclick="send('/api/tv/control', '${d.device_id}', '${d.device_type}', 'turn_on')">ON</button>
+                                <button onclick="send('/api/tv/control', '${d.device_id}', '${d.device_type}', 'turn_off')">OFF</button>
                             </div>
                             <div class="controls">
-                                <button onclick="send('${d.device_id}', '${d.device_type}', 'play')">PLAY</button>
-                                <button onclick="send('${d.device_id}', '${d.device_type}', 'pause')">PAUSE</button>
+                                <button onclick="send('/api/tv/control', '${d.device_id}', '${d.device_type}', 'play')">PLAY</button>
+                                <button onclick="send('/api/tv/control', '${d.device_id}', '${d.device_type}', 'pause')">PAUSE</button>
                             </div>
                             <div class="controls">
-                                <button onclick="send('${d.device_id}', '${d.device_type}', 'volume_up')">VOL +</button>
-                                <button onclick="send('${d.device_id}', '${d.device_type}', 'volume_down')">VOL -</button>
+                                <button onclick="send('/api/tv/control', '${d.device_id}', '${d.device_type}', 'volume_up')">VOL +</button>
+                                <button onclick="send('/api/tv/control', '${d.device_id}', '${d.device_type}', 'volume_down')">VOL -</button>
                             </div>
                         `;
-                    } else {
+                    } else if (isAC) {
                         html += `
                             <div class="controls">
-                                <button onclick="send('${d.device_id}', '${d.device_type}', 'turn_on')">ON</button>
-                                <button onclick="send('${d.device_id}', '${d.device_type}', 'turn_off')">OFF</button>
+                                <button onclick="send('/api/air-condition/control', '${d.device_id}', '${d.device_type}', 'turn_on')">ON</button>
+                                <button onclick="send('/api/air-condition/control', '${d.device_id}', '${d.device_type}', 'turn_off')">OFF</button>
+                            </div>
+                            <select onchange="send('/api/air-condition/control', '${d.device_id}', '${d.device_type}', 'set_mode', this.value)">
+                                <option value="cool">Mode: Cool</option>
+                                <option value="heat">Mode: Heat</option>
+                                <option value="auto">Mode: Auto</option>
+                                <option value="dry">Mode: Dry</option>
+                                <option value="fan">Mode: Fan</option>
+                            </select>
+                            <div class="temp-picker">
+                                <span>Θερμοκρασία (°C):</span>
+                                <input type="number" min="16" max="32" value="24" 
+                                    onchange="send('/api/air-condition/control', '${d.device_id}', '${d.device_type}', 'set_temperature', parseFloat(this.value))">
+                            </div>
+                            <div class="warning-text">* Unsupp: BRP069C4x fw 2.0.0</div>
+                        `;
+                    } else {
+                        const endpoint = isPlug ? '/api/plug/control' : '/api/light/control';
+                        html += `
+                            <div class="controls">
+                                <button onclick="send('${endpoint}', '${d.device_id}', '${d.device_type}', 'turn_on')">ON</button>
+                                <button onclick="send('${endpoint}', '${d.device_id}', '${d.device_type}', 'turn_off')">OFF</button>
                             </div>
                         `;
 
                         if (showBrightness) {
                             html += `
                                 <input type="range" min="1" max="100" value="80" 
-                                    onchange="send('${d.device_id}', '${d.device_type}', 'set_brightness', parseInt(this.value))">
+                                    onchange="send('${endpoint}', '${d.device_id}', '${d.device_type}', 'set_brightness', parseInt(this.value))">
                             `;
                         }
                     }
@@ -180,12 +233,7 @@
             }
         }
 
-        async function send(id, type, action, val = null) {
-            let endpoint = '/api/light/control';
-            const t = type.toLowerCase();
-            if (t.includes('tv')) endpoint = '/api/tv/control';
-            else if (t.includes('plug') || t.includes('p100')) endpoint = '/api/plug/control';
-
+        async function send(endpoint, id, type, action, val = null) {
             await fetch(endpoint, {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},

@@ -83,4 +83,9 @@ class ControlTVDevice(BaseModel):
     value: Optional[Any] = None
     triggered_by: str = Field(default="user")
 
-
+class ControlAirConditionDevice(BaseModel):
+    device_id: str
+    action: Literal["turn_on", "turn_off", "set_temperature", "set_mode"]
+    dev_type: str
+    value: Optional[Any] = None
+    triggered_by: str = Field(default="user")

@@ -39,7 +39,7 @@ def main():
         print("""
     ╔══════════════════════════════════════╗
     ║                 AetherOS             ║
-    ║        Local-First IoT Hub v1.0      ║
+    ║        Local-First IoT Hub v0.4.0    ║
     ╚══════════════════════════════════════╝
     """)
 
@@ -60,7 +60,7 @@ def main():
         if choice == "🔌 Add / Register New Device":
             device_type = questionary.select(
                 "Select device type:",
-                choices=["💡 Light", "⚡ Plug", "📺 TV"],
+                choices=["💡 Light", "⚡ Plug", "📺 TV", "❄️ Air Conditioner"],
                 style=questionary.Style([
                     ("pointer", "fg:cyan bold"),
                     ("highlighted", "fg:cyan bold"),
@@ -70,7 +70,7 @@ def main():
             if device_type in ["💡 Light", "⚡ Plug"]:
                 brand = questionary.select(
                     "Select brand:",
-                    choices=["Tapo", "Tuya", "Yeelight", "Shelly", "Phue"],
+                    choices=["Tapo", "Tuya", "Yeelight", "WiZ", "Shelly", "Phue"],
                     style=questionary.Style([
                         ("pointer", "fg:cyan bold"),
                         ("highlighted", "fg:cyan bold"),
@@ -121,6 +121,13 @@ def main():
                                 "yee_ceiling3",
                                 "yee_ceiling4",
                             ],
+                        ).ask()
+
+                elif brand == "WiZ":
+                    if device_type == "💡 Light":
+                        model = questionary.select(
+                            "Select WiZ model:",
+                            choices=["wiz_light", "wiz_tunable_white", "wiz_full_color", "wiz_strip"],
                         ).ask()
                 
                 elif brand == "Shelly":
@@ -209,6 +216,35 @@ def main():
                     }
                     save_device(new_device)
                     print(f"\n[✔] TV '{device_id}' successfully registered!")
+
+            elif device_type == "❄️ Air Conditioner":
+                brand = questionary.select(
+                    "Select AC brand:",
+                    choices=["Daikin"],
+                    style=questionary.Style([
+                        ("pointer", "fg:cyan bold"),
+                        ("highlighted", "fg:cyan bold"),
+                    ]),
+                ).ask()
+
+                print("\n⚠️ Note: Daikin BRP069C4x with firmware version 2.0.0 is currently unsupported.\n")
+
+                device_id = questionary.text(
+                    "Enter unique Device ID (e.g. living_room_ac):"
+                ).ask()
+                ip_address = questionary.text(
+                    "Enter AC IP Address (e.g. 192.168.1.60):"
+                ).ask()
+
+                if device_id and ip_address:
+                    new_device = {
+                        "device_id": device_id,
+                        "device_type": "daikin_ac",
+                        "brand": "Daikin",
+                        "ip_address": ip_address,
+                    }
+                    save_device(new_device)
+                    print(f"\n[✔] Air Conditioner '{device_id}' successfully registered!")
 
             input("\nPress Enter to continue...")
 
