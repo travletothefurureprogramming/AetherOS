@@ -14,6 +14,7 @@ from fastapi.staticfiles import StaticFiles
 from models.device_models import ControlLightDevice, ControlPlugDevice, ControlTVDevice
 from fastapi.responses import FileResponse
 from drivers.yeelight_light import Yeelight_Light
+from drivers.wiz_driver import WizLight
 
 app = FastAPI()
 app.mount("/static", StaticFiles(directory="static"), name="static")
@@ -128,6 +129,15 @@ async def control_light(command: ControlLightDevice):
           status_code=502,
           detail=f"Could not connect to physical device {device_id}: {str(e)}",
         )
+    elif brand == "Wiz" or dev_type.startswith("wiz_"):
+      try:
+        devices_db[device_id] = WizLight(device_id, dev_type, ip_address)
+      except Exception as e:
+        print(f"Could not connect to physical device {device_id}: {str(e)}")
+        raise HTTPException(
+          status_code=502,
+          detail=f"Could not connect to physical device {device_id}: {str(e)}",
+        )
     else:
       try:
         devices_db[device_id] = await TapoLight.create(
@@ -168,6 +178,11 @@ async def control_light(command: ControlLightDevice):
           devices_db[device_id] = Shelly(device_id, dev_type, ip_address, relay_number)
         elif brand == "Yeelight":
           devices_db[device_id] = Yeelight_Light(device_id, ip_address, dev_type)
+        elif brand == "Phue":
+          devices_db[device_id] = Phue(device_id, dev_type, ip_address, device_number)
+        elif brand == "Wiz":
+          devices_db[device_id] = WizLight(device_id, dev_type, ip_address)
+
         device = devices_db[device_id]
         
         if action == "turn_on":

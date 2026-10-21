@@ -16,7 +16,8 @@ class Yeelight_Light(BaseDevice):
             print(f"Η συσκευή ενεργοποιήθηκε επιτυχώς: {self.device_id}")
             return f"Successfully turned on the device: {self.device_id}"
         except Exception as e:
-            return f"Error while trying to turn off the {self.device_id}: {e}"
+            print(f"Σφάλμα κατά την ενεργοποίηση του {self.device_id}: {e}")
+            return f"Error while trying to turn on the {self.device_id}: {e}"
 
 
     async def turn_off(self):
@@ -29,7 +30,7 @@ class Yeelight_Light(BaseDevice):
             print(f"Σφάλμα κατά την απενεργοποίηση του {self.device_id}: {e}")
             return f"Error while trying to turn off the {self.device_id}: {e}"
 
-    async def set_colour(self, colour: str):        
+    async def set_colour(self, colour: str):
         color_map = {
             "red": (255, 0, 0),
             "green": (0, 255, 0),
