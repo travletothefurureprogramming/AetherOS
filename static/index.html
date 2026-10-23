@@ -154,7 +154,7 @@
                 devices.forEach(d => {
                     const brand = (d.brand || '').toLowerCase();
                     const type = (d.device_type || '').toLowerCase();
-                    const isTv = type.includes('tv') || brand === 'lg' || brand === 'samsung' || brand === "sony bravia";
+                    const isTv = type.includes('tv') || brand === 'lg' || brand === 'samsung' || brand === "sony bravia" || brand === "roku";
                     const isAC = type.includes('daikin') || type.includes('ac') || brand === 'daikin';
                     const isPlug = type.includes('plug') || type.includes('p100') || type.includes('p110') || type.includes('p115');
                     const isRestricted = brand === 'shelly' || brand === 'phue' || type.includes('shelly') || type.includes('phue');

@@ -17,6 +17,7 @@ from drivers.yeelight_light import Yeelight_Light
 from drivers.wiz_driver import WizLight
 from drivers.daikinac_driver import DaikinAc
 from drivers.sony_bravia import SonyBraviaTv
+from drivers.roku_driver import RokuTV
 
 app = FastAPI()
 app.mount("/static", StaticFiles(directory="static"), name="static")
@@ -347,6 +348,13 @@ async def control_tv(command: ControlTVDevice):
         devices_db[device_id] = SonyBraviaTv(device_id, dev_type, ip_address, psk)
       except Exception as e:
           raise HTTPException(status_code=502, detail=f"Could not connect to Sony Bravia TV {device_id}: {str(e)}")
+
+    elif "roku" in dev_type.lower() or brand in ["Roku TV", "Roku"]:
+      try:
+        devices_db[device_id] = RokuTV(device_id, dev_type, ip_address)
+      except Exception as e:
+          raise HTTPException(status_code=502, detail=f"Could not connect to Roku TV {device_id}: {str(e)}")
+      
     else:
         raise HTTPException(status_code=400, detail=f"Unknown TV brand/type: {brand}")
 

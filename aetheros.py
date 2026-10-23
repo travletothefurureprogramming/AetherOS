@@ -192,7 +192,7 @@ def main():
             elif device_type == "📺 TV":
                 brand = questionary.select(
                     "Select TV brand:",
-                    choices=["LG webOS", "Samsung", "Sony Bravia"],
+                    choices=["LG webOS", "Samsung", "Sony Bravia", "Roku"],
                     style=questionary.Style([
                         ("pointer", "fg:cyan bold"),
                         ("highlighted", "fg:cyan bold"),
@@ -217,6 +217,9 @@ def main():
                     elif brand == "Sony Bravia":
                         dev_type = "sony_bravia"
                         brand_name = "Sony Bravia"
+                    elif brand == "Roku":
+                        dev_type = "roky_tv"
+                        brand_name = "Roku"
                     else:
                         dev_type = "lg_tv"
                         brand_name = "LG"
