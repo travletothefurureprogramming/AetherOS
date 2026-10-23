@@ -1,6 +1,9 @@
 from sony_bravia_api import Bravia
 from drivers.base_device import BaseDevice
 import re
+
+
+
 class SonyBraviaTv(BaseDevice):
     def __init__(self, device_id, dev_type, ip, psk):
         super().__init__(device_id)
