@@ -39,7 +39,7 @@ def main():
         print("""
     ╔══════════════════════════════════════╗
     ║                 AetherOS             ║
-    ║        Local-First IoT Hub v0.4.0    ║
+    ║        Local-First IoT Hub v0.5.0    ║
     ╚══════════════════════════════════════╝
     """)
 
@@ -192,7 +192,7 @@ def main():
             elif device_type == "📺 TV":
                 brand = questionary.select(
                     "Select TV brand:",
-                    choices=["LG webOS", "Samsung"],
+                    choices=["LG webOS", "Samsung", "Sony Bravia"],
                     style=questionary.Style([
                         ("pointer", "fg:cyan bold"),
                         ("highlighted", "fg:cyan bold"),
@@ -206,14 +206,31 @@ def main():
                     "Enter TV IP Address (e.g. 192.168.1.8):"
                 ).ask()
 
+                psk = None
+                if brand == "Sony Bravia":
+                    psk = questionary.text("Enter Sony Bravia Pre-Shared Key (PSK):").ask()
+
                 if device_id and ip_address:
-                    is_samsung = brand == "Samsung"
+                    if brand == "Samsung":
+                        dev_type = "samsung_tv"
+                        brand_name = "Samsung"
+                    elif brand == "Sony Bravia":
+                        dev_type = "sony_bravia"
+                        brand_name = "Sony Bravia"
+                    else:
+                        dev_type = "lg_tv"
+                        brand_name = "LG"
+
                     new_device = {
                         "device_id": device_id,
-                        "device_type": "samsung_tv" if is_samsung else "lg_tv",
-                        "brand": "Samsung" if is_samsung else "LG",
+                        "device_type": dev_type,
+                        "brand": brand_name,
                         "ip_address": ip_address,
                     }
+
+                    if brand == "Sony Bravia" and psk:
+                        new_device["psk"] = psk
+
                     save_device(new_device)
                     print(f"\n[✔] TV '{device_id}' successfully registered!")
 
@@ -258,9 +275,10 @@ def main():
                     auth_info = " (Auth Configured)" if "auth" in d else ""
                     relay_info = f" | Relay: {d['relay']}" if "relay" in d else ""
                     number_info = f" | Number: {d['number']}" if "number" in d else ""
+                    psk_info = " | PSK: [PROTECTED]" if "psk" in d else ""
                     print(
                         f"• ID: {d['device_id']} | Brand: {d['brand']} | Type:"
-                        f" {d['device_type']} | IP: {d['ip_address']}{auth_info}{relay_info}{number_info}"
+                        f" {d['device_type']} | IP: {d['ip_address']}{auth_info}{relay_info}{number_info}{psk_info}"
                     )
             input("\nPress Enter to continue...")
 

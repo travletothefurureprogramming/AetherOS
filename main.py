@@ -16,6 +16,7 @@ from fastapi.responses import FileResponse
 from drivers.yeelight_light import Yeelight_Light
 from drivers.wiz_driver import WizLight
 from drivers.daikinac_driver import DaikinAc
+from drivers.sony_bravia import SonyBraviaTv
 
 app = FastAPI()
 app.mount("/static", StaticFiles(directory="static"), name="static")
@@ -311,6 +312,8 @@ async def control_tv(command: ControlTVDevice):
   value = command.value
   triggered_by = command.triggered_by
 
+    
+
   device_config = get_device_from_registry(device_id)
   if not device_config:
     raise HTTPException(
@@ -320,6 +323,9 @@ async def control_tv(command: ControlTVDevice):
 
   ip_address = device_config.get("ip_address")
   brand = device_config.get("brand")
+
+  if "bravia" in dev_type.lower() or brand in ["Sony Bravia", "Bravia"]:
+    psk = device_config.get("psk")
 
   if device_id not in devices_db:
     if "lg" in dev_type.lower() or brand in ["Lg", "LG"]:        
@@ -335,6 +341,12 @@ async def control_tv(command: ControlTVDevice):
           devices_db[device_id] = SamsungTV(device_id, ip_address, dev_type)
         except Exception as e:
           raise HTTPException(status_code=502, detail=f"Could not connect to Samsung TV {device_id}: {str(e)}")
+
+    elif "bravia" in dev_type.lower() or brand in ["Sony Bravia", "Bravia"]:
+      try: 
+        devices_db[device_id] = SonyBraviaTv(device_id, dev_type, ip_address, psk)
+      except Exception as e:
+          raise HTTPException(status_code=502, detail=f"Could not connect to Sony Bravia TV {device_id}: {str(e)}")
     else:
         raise HTTPException(status_code=400, detail=f"Unknown TV brand/type: {brand}")
 
