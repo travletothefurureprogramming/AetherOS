@@ -2,6 +2,12 @@
 
 All notable changes to AetherOS will be documented in this file.
 
+## [0.5.0-alpha] - 2026-10-23
+### Added
+- **Sony Bravia TV Integration**: Added local REST API and envelope support via `sony-bravia-api` using Pre-Shared Key (PSK) authentication.
+- **Unified Input Parsing**: Implemented regex-based input string parsing in the Sony Bravia driver to seamlessly map unified API inputs (e.g., "hdmi1") to driver-level arguments.
+- **CLI & Backend Expansion**: Updated `aetheros.py` wizard and `main.py` routing logic to support registering and controlling Sony Bravia smart televisions locally.
+
 ## [0.4.0-alpha] - 2026-10-21
 ### Added
 - **WiZ Smart Lights Integration**: Added zero-config, local-first UDP driver for WiZ bulbs and light strips.
