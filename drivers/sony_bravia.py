@@ -1,9 +1,6 @@
 from sony_bravia_api import Bravia
 from drivers.base_device import BaseDevice
 import re
-
-bravia = Bravia('<device_name>', '<ip_address>','http://<ip_address>/sony/', '<security_token>')
-
 class SonyBraviaTv(BaseDevice):
     def __init__(self, device_id, dev_type, ip, psk):
         super().__init__(device_id)
@@ -65,11 +62,3 @@ class SonyBraviaTv(BaseDevice):
             self.client.setExtInput(input_type, port)
         return  f"Successfully change source on the device: {self.device_id}"
 
-
-bravia.setVol("10")
-
-
-bravia.setMute(True)
-
-
-bravia.setPower(True)
