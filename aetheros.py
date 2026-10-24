@@ -38,8 +38,8 @@ def main():
 
         print("""
     ╔══════════════════════════════════════╗
-    ║                 AetherOS             ║
-    ║        Local-First IoT Hub v0.5.0    ║
+    ║                AetherOS              ║
+    ║       Local-First IoT Hub v0.9.0     ║
     ╚══════════════════════════════════════╝
     """)
 
@@ -60,7 +60,7 @@ def main():
         if choice == "🔌 Add / Register New Device":
             device_type = questionary.select(
                 "Select device type:",
-                choices=["💡 Light", "⚡ Plug", "📺 TV", "❄️ Air Conditioner"],
+                choices=["💡 Light", "⚡ Plug", "📺 TV", "❄️ Air Conditioner", "🔊 Speaker"],
                 style=questionary.Style([
                     ("pointer", "fg:cyan bold"),
                     ("highlighted", "fg:cyan bold"),
@@ -261,11 +261,9 @@ def main():
                     if brand == "Daikin":
                         dev_type = "daikin"
                         brand_name = "Daikin"
-
                     elif brand == "Gree":
                         dev_type = "gree"
                         brand_name = "Gree"
-
                     elif brand == "Mitsubishi":
                         dev_type = "mitsubishi"
                         brand_name = "Mitsubishi"
@@ -278,6 +276,33 @@ def main():
                     }
                     save_device(new_device)
                     print(f"\n[✔] Air Conditioner '{device_id}' successfully registered!")
+
+            elif device_type == "🔊 Speaker":
+                brand = questionary.select(
+                    "Select speaker brand:",
+                    choices=["Sonos"],
+                    style=questionary.Style([
+                        ("pointer", "fg:cyan bold"),
+                        ("highlighted", "fg:cyan bold"),
+                    ]),
+                ).ask()
+
+                device_id = questionary.text(
+                    "Enter unique Device ID (e.g. living_room_speaker):"
+                ).ask()
+                ip_address = questionary.text(
+                    "Enter Speaker IP Address (e.g. 192.168.1.180):"
+                ).ask()
+
+                if device_id and ip_address:
+                    new_device = {
+                        "device_id": device_id,
+                        "device_type": "sonos",
+                        "brand": "Sonos",
+                        "ip_address": ip_address,
+                    }
+                    save_device(new_device)
+                    print(f"\n[✔] Speaker '{device_id}' successfully registered!")
 
             input("\nPress Enter to continue...")
 

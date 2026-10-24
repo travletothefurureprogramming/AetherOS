@@ -157,6 +157,7 @@
                     const isTv = type.includes('tv') || brand === 'lg' || brand === 'samsung' || brand === "sony bravia" || brand === "roku";
                     const isAC = type.includes('daikin') || type.includes('gree') || type.includes("mitsubishi") || type.includes('ac') || brand === 'daikin' || brand === "gree" || brand === "mitsubishi";
                     const isPlug = type.includes('plug') || type.includes('p100') || type.includes('p110') || type.includes('p115');
+                    const isSpeaker = type.includes('sonos') || brand === "Sonos"
                     const isRestricted = brand === 'shelly' || brand === 'phue' || type.includes('shelly') || type.includes('phue');
                     const showBrightness = !isTv && !isAC && !isPlug && !isRestricted;
 
@@ -206,7 +207,20 @@
                             </div>
                             <div class="warning-text">* Unsupp: BRP069C4x fw 2.0.0</div>
                         `;
-                    } else {
+                    } else if (isSpeaker){
+                        html += `
+                            <div class="controls">
+                                <button onclick="send('/api/speaker/control', '${d.device_id}', '${d.device_type}', 'play')">Play</button>
+                                <button onclick="send('/api/speaker/control', '${d.device_id}', '${d.device_type}', 'pause')">Pause</button>
+                                <button onclick="send('/api/speaker/control', '${d.device_id}', '${d.device_type}', 'stop')">Stop</button>
+                                <button onclick="send('/api/speaker/control', '${d.device_id}', '${d.device_type}', 'volume_up')">Volume Up</button>
+                                <button onclick="send('/api/speaker/control', '${d.device_id}', '${d.device_type}', 'volume_down')">Volume Down</button>
+
+                            </div>
+    
+                            <div class="warning-text">* Unsupp: BRP069C4x fw 2.0.0</div>
+                        `;
+                    }  else {
                         const endpoint = isPlug ? '/api/plug/control' : '/api/light/control';
                         html += `
                             <div class="controls">

@@ -11,7 +11,7 @@ from drivers.phue_driver import Phue
 from drivers.tapo_plug import TapoPlug
 from fastapi import FastAPI, HTTPException
 from fastapi.staticfiles import StaticFiles
-from models.device_models import ControlLightDevice, ControlPlugDevice, ControlTVDevice, ControlAirConditionDevice
+from models.device_models import ControlLightDevice, ControlPlugDevice, ControlTVDevice, ControlAirConditionDevice, ContolSpeakerDevice
 from fastapi.responses import FileResponse
 from drivers.yeelight_light import Yeelight_Light
 from drivers.wiz_driver import WizLight
@@ -20,6 +20,7 @@ from drivers.sony_bravia import SonyBraviaTv
 from drivers.roku_driver import RokuTV
 from drivers.gree_driver import GreeAirCondition
 from drivers.mitsubishi_driver import MitsubishiAirCondition
+from drivers.sonos_driver import SonosSpeaker
 
 app = FastAPI()
 app.mount("/static", StaticFiles(directory="static"), name="static")
@@ -542,7 +543,105 @@ async def control_air_condition(command: ControlAirConditionDevice):
         "status": "success",
         "message": f"Executed {action} on {device_id}",
     }
-              
+
+@app.post("/api/speaker/control")
+async def control_speaker(command:ContolSpeakerDevice):
+  device_id = command.device_id
+  dev_type = command.dev_type
+  action = command.action
+  value = command.value
+  triggered_by = command.triggered_by
+
+
+  device_config = get_device_from_registry(device_id)
+  if not device_config:
+    raise HTTPException(
+        status_code=404,
+        detail=f"Device '{device_id}' not found in registry. Please register it first.",
+    )
+
+  ip_address = device_config.get("ip_address")
+  brand = device_config.get("brand")
+
+  if device_id not in devices_db:
+    if brand == "Sonos" or dev_type.startswith("sonos"):
+      devices_db[device_id] = SonosSpeaker(device_id, dev_type, ip_address)
+      
+  
+  device = devices_db[device_id]
+
+  try:
+      if action == "play":
+        device.play()
+      elif action == "pause":
+        device.pause()
+      elif action == "previous":
+        device.previous()
+      elif action == "next":
+        device.next()
+      elif action == "mute":
+        device.mute()
+      elif action == "stop":
+        device.stop()
+      elif action == "volume_up":
+        device.volume_up()
+      elif action == "volume_down":
+        device.volume_down()
+  except Exception as e:
+    error_str = str(e)
+    if "SESSION_TIMEOUT" in error_str or "Unauthorized" in error_str:
+      if device_id in devices_db:
+        del devices_db[device_id]
+      
+      try:
+        if device_id not in devices_db:
+          if brand == "Sonos" or dev_type.startswith("sonos"):
+            devices_db[device_id] = SonosSpeaker(device_id, dev_type, ip_address)
+          
+        device = devices_db[device_id]
+
+        if action == "play":
+          device.play()
+        elif action == "pause":
+          device.pause()
+        elif action == "previous":
+          device.previous()
+        elif action == "next":
+          device.next()
+        elif action == "mute":
+          device.mute()
+        elif action == "stop":
+          device.stop()
+        elif action == "volume_up":
+          device.volume_up()
+        elif action == "volume_down":
+          device.volume_down()
+
+      except Exception as inner_e:
+        raise HTTPException(
+            status_code=502,
+            detail=f"Session expired and auto-reconnect failed: {str(inner_e)}",
+        )
+    else:
+      raise HTTPException(status_code=500, detail=f"Device error: {error_str}")
+
+    await event_bus.publish(
+        f"{device_id}_{action}",
+        {
+            "device_id": device_id,
+            "dev_type": dev_type,
+            "action": action,
+            "value": value,
+            "triggered_by": triggered_by,
+        },
+    )
+
+    return {
+        "status": "success",
+        "message": f"Executed {action} on {device_id}",
+    }
+
+
 def main():
   print("--- AetherOS Core / API Loader ---")
 

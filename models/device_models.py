@@ -89,3 +89,10 @@ class ControlAirConditionDevice(BaseModel):
     dev_type: str
     value: Optional[Any] = None
     triggered_by: str = Field(default="user")
+
+class ContolSpeakerDevice(BaseModel):
+    device_id: str
+    action: Literal["play", "pause", "stop", "next", "previous", "volume_up", "volume_down", "mute"]
+    dev_type: str
+    value: Optional[Any] = None
+    triggered_by: str = Field(default="user")
