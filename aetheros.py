@@ -240,14 +240,15 @@ def main():
             elif device_type == "❄️ Air Conditioner":
                 brand = questionary.select(
                     "Select AC brand:",
-                    choices=["Daikin"],
+                    choices=["Daikin", "Gree"],
                     style=questionary.Style([
                         ("pointer", "fg:cyan bold"),
                         ("highlighted", "fg:cyan bold"),
                     ]),
                 ).ask()
 
-                print("\n⚠️ Note: Daikin BRP069C4x with firmware version 2.0.0 is currently unsupported.\n")
+                if brand == "Daikin":
+                    print("\n⚠️ Note: Daikin BRP069C4x with firmware version 2.0.0 is currently unsupported.\n")
 
                 device_id = questionary.text(
                     "Enter unique Device ID (e.g. living_room_ac):"
@@ -257,10 +258,18 @@ def main():
                 ).ask()
 
                 if device_id and ip_address:
+                    if brand == "Daikin":
+                        dev_type = "daikin"
+                        brand_name = "Daikin"
+
+                    elif brand == "Gree":
+                        dev_type = "gree"
+                        brand_name = "Gree"
+
                     new_device = {
                         "device_id": device_id,
-                        "device_type": "daikin_ac",
-                        "brand": "Daikin",
+                        "device_type": dev_type,
+                        "brand": brand_name,
                         "ip_address": ip_address,
                     }
                     save_device(new_device)
