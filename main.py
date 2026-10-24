@@ -18,6 +18,8 @@ from drivers.wiz_driver import WizLight
 from drivers.daikinac_driver import DaikinAc
 from drivers.sony_bravia import SonyBraviaTv
 from drivers.roku_driver import RokuTV
+from drivers.gree_driver import GreeAirCondition
+from drivers.mitsubishi_driver import MitsubishiAirCondition
 
 app = FastAPI()
 app.mount("/static", StaticFiles(directory="static"), name="static")
@@ -473,6 +475,13 @@ async def control_air_condition(command: ControlAirConditionDevice):
     if brand == "Daikin" or dev_type.startswith("daikin_"):
       devices_db[device_id] = DaikinAc(device_id, dev_type, ip_address)
 
+    if brand == "Gree" or dev_type.startswith("gree"):
+      devices_db[device_id] = GreeAirCondition(device_id, dev_type, ip_address)
+
+    if brand == "Mitsubishi" or dev_type.startswith("mitsubishi"):
+      devices_db[device_id] = MitsubishiAirCondition(device_id, dev_type, ip_address)
+    
+
   device = devices_db[device_id]
   try:
     if action == "turn_on":
@@ -493,6 +502,12 @@ async def control_air_condition(command: ControlAirConditionDevice):
         if brand == "Daikin" or dev_type.startswith("daikin_"):
           devices_db[device_id] = DaikinAc(device_id, dev_type, ip_address)
 
+        if brand == "Gree" or dev_type.startswith("gree"):
+          devices_db[device_id] = GreeAirCondition(device_id, dev_type, ip_address)
+
+        if brand == "Mitsubishi" or dev_type.startswith("mitsubishi"):
+          devices_db[device_id] = MitsubishiAirCondition(device_id, dev_type, ip_address)
+          
         device = devices_db[device_id]
 
         if action == "turn_on":

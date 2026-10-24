@@ -240,7 +240,7 @@ def main():
             elif device_type == "❄️ Air Conditioner":
                 brand = questionary.select(
                     "Select AC brand:",
-                    choices=["Daikin", "Gree"],
+                    choices=["Daikin", "Gree", "Mitsubishi"],
                     style=questionary.Style([
                         ("pointer", "fg:cyan bold"),
                         ("highlighted", "fg:cyan bold"),
@@ -265,6 +265,10 @@ def main():
                     elif brand == "Gree":
                         dev_type = "gree"
                         brand_name = "Gree"
+
+                    elif brand == "Mitsubishi":
+                        dev_type = "mitsubishi"
+                        brand_name = "Mitsubishi"
 
                     new_device = {
                         "device_id": device_id,
