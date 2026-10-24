@@ -2,6 +2,12 @@
 
 All notable changes to AetherOS will be documented in this file.
 
+## [0.6.0-alpha] - 2026-10-24
+### Added
+- **Roku TV Integration**: Added local ECP driver support (port 8060) for Roku media players and Smart TVs.
+- **Extended HTTP Protocol Controls**: Implemented direct HTTP POST endpoints for volume control (VolumeUp, VolumeDown, VolumeMute) and power management (PowerOff).
+- **Setup Wizard Expansion**: Updated `main.py` routing endpoints and aetheros.py CLI wizard to support Roku TV onboarding.
+
 ## [0.5.0-alpha] - 2026-10-23
 ### Added
 - **Sony Bravia TV Integration**: Added local REST API and envelope support via `sony-bravia-api` using Pre-Shared Key (PSK) authentication.
