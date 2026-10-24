@@ -24,6 +24,19 @@ class RokuTV(BaseDevice):
         requests.post(f"http://{self.ip}:8060/keypress/VolumeDown")
         return f"Successfully volume down the device: {self.device_id}"
 
+    def play(self):
+        self.device.play()
+        return  f"Successfully play media on the device: {self.device_id}"
+
+    def pause(self):
+        self.device.pause()
+        return f"Successfully pause media on the device: {self.device_id}"
+
+    def stop(self):
+        # !!!!!! For now stop is pause !!!!!
+        self.device.pause()
+        return  f"Successfully stop media on the device: {self.device_id}"
+
     def turn_off(self):
         try:
             requests.post(f"http://{self.ip}:8060/keypress/PowerOff")
