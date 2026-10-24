@@ -2,6 +2,12 @@
 
 All notable changes to AetherOS will be documented in this file.
 
+## [0.8.0-alpha] - 2026-10-24
+### Added
+- **Mitsubishi AC Integration**: Added local Echonet Lite driver support for Mitsubishi-based mini-split air conditioners.
+- **Climate Control Handlers**: Implemented asynchronous state management for power states, operating modes, and target temperatures.
+- **Manual IP Setup & CLI Expansion**: Updated backend routing endpoints and extended the interactive setup wizard (`aetheros.py`) to support direct manual static IP registration for Mitsubishi devices.
+
 ## [0.7.0-alpha] - 2026-10-24
 ### Added
 - **Gree AC Integration**: Added local UDP driver support (port 7000) for Gree-based mini-split air conditioners and OEM equivalents (e.g., Inventor, Cooper&Hunter, Carrier).
