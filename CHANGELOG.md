@@ -2,6 +2,12 @@
 
 All notable changes to AetherOS will be documented in this file.
 
+## [0.9.0-alpha] - 2026-10-25
+### Added
+- **Sonos Local Audio Integration**: Added local UPnP/SOAP driver support via the `soco` library for Sonos smart speakers and zone players.
+- **Playback & Transport Handlers**: Implemented direct local control for playback states (play, pause, stop), track navigation, volume scaling, mute toggling, and metadata retrieval.
+- **Setup Wizard & CLI Expansion**: Added a dedicated Speaker category to `aetheros.py` supporting manual Sonos zone IP onboarding.
+
 ## [0.8.0-alpha] - 2026-10-24
 ### Added
 - **Mitsubishi AC Integration**: Added local Echonet Lite driver support for Mitsubishi-based mini-split air conditioners.
