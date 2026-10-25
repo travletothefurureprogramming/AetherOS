@@ -9,7 +9,7 @@ from drivers.samsung_driver import SamsungTV
 from drivers.shelly_driver import Shelly
 from drivers.phue_driver import Phue
 from drivers.tapo_plug import TapoPlug
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Depends
 from fastapi.staticfiles import StaticFiles
 from models.device_models import ControlLightDevice, ControlPlugDevice, ControlTVDevice, ControlAirConditionDevice, ContolSpeakerDevice
 from fastapi.responses import FileResponse
@@ -21,8 +21,9 @@ from drivers.roku_driver import RokuTV
 from drivers.gree_driver import GreeAirCondition
 from drivers.mitsubishi_driver import MitsubishiAirCondition
 from drivers.sonos_driver import SonosSpeaker
+from core.security import verify_api_key
 
-app = FastAPI()
+app = FastAPI(title="AetherOS Hub", version="1.0.0")
 app.mount("/static", StaticFiles(directory="static"), name="static")
 event_bus = EventBus()
 devices_db = {}
@@ -77,7 +78,7 @@ async def get_devices():
     return sanitized_devices
 
 
-@app.post("/api/light/control")
+@app.post("/api/light/control", dependencies=[Depends(verify_api_key)])
 async def control_light(command: ControlLightDevice):
     device_id = command.device_id
     dev_type = command.dev_type
@@ -223,7 +224,7 @@ async def control_light(command: ControlLightDevice):
         "message": f"Executed {action} on {device_id}",
     }
 
-@app.post("/api/plug/control")
+@app.post("/api/plug/control", dependencies=[Depends(verify_api_key)])
 async def control_plug(command: ControlPlugDevice):
     device_id = command.device_id
     dev_type = command.dev_type
@@ -310,7 +311,7 @@ async def control_plug(command: ControlPlugDevice):
         "message": f"Executed {action} on {device_id}",
     }
 
-@app.post("/api/tv/control")
+@app.post("/api/tv/control", dependencies=[Depends(verify_api_key)])
 async def control_tv(command: ControlTVDevice):
     device_id = command.device_id
     dev_type = command.dev_type
@@ -455,7 +456,7 @@ async def get_state(device_id):
     except Exception as e:
         return f"An error has occured: {e}"
 
-@app.post("/api/air-condition/control")
+@app.post("/api/air-condition/control", dependencies=[Depends(verify_api_key)])
 async def control_air_condition(command: ControlAirConditionDevice):
     device_id = command.device_id
     dev_type = command.dev_type
@@ -546,7 +547,7 @@ async def control_air_condition(command: ControlAirConditionDevice):
         "message": f"Executed {action} on {device_id}",
     }
 
-@app.post("/api/speaker/control")
+@app.post("/api/speaker/control", dependencies=[Depends(verify_api_key)])
 async def control_speaker(command:ContolSpeakerDevice):
     device_id = command.device_id
     dev_type = command.dev_type

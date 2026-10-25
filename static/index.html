@@ -178,31 +178,110 @@
         border: 1px dashed var(--border-color);
         border-radius: 8px;
     }
+
+    /* Modal Ρύθμισης API Key */
+    #auth-modal {
+        position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+        background: rgba(0,0,0,0.85); display: flex; justify-content: center; align-items: center;
+        z-index: 1000;
+    }
+    .modal-card {
+        background: var(--bg-card);
+        border: 1px solid var(--border-color);
+        padding: 30px;
+        border-radius: 8px;
+        max-width: 400px;
+        width: 100%;
+        text-align: center;
+    }
+    .modal-card input {
+        background: #171717; border: 1px solid var(--border-color); color: #fff;
+        padding: 10px; width: 85%; border-radius: 6px; font-family: monospace; margin-top: 15px; outline: none;
+    }
+    .modal-card button {
+        margin-top: 15px; width: 100%; padding: 10px;
+    }
+    .hidden { display: none !important; }
 </style>
 </head>
 <body>
 
     <header>
-        <h1>AetherOS Hub</h1>
-        <div id="status">Φόρτωση...</div>
+        <h1>AetherOS Hub // v1.0.0</h1>
+        <div id="status">Loading...</div>
     </header>
 
     <div id="container" class="grid"></div>
 
+    <div id="auth-modal" class="hidden">
+        <div class="modal-card">
+            <h3 style="margin-top: 0; font-size: 14px; font-weight: 500;">AetherOS Security Setings</h3>
+            <p style="font-size: 12px; color: var(--text-muted); line-height: 1.4;">
+                Paste your API Key from file: <code>cfg/api_key.json</code> of your server:
+            </p>
+            <input type="password" id="api-key-input" placeholder="aether_xxxxxxxxxxxx">
+            <br>
+            <button onclick="saveApiKey()">Save & Connect</button>
+        </div>
+    </div>
+
     <script>
+        function checkAuth() {
+            const savedKey = localStorage.getItem("aetheros_api_key");
+            if (!savedKey) {
+                document.getElementById("auth-modal").classList.remove("hidden");
+                return false;
+            }
+            return true;
+        }
+
+        function saveApiKey() {
+            const inputVal = document.getElementById("api-key-input").value.trim();
+            if (inputVal.startsWith("aether_") || inputVal.length > 5) {
+                localStorage.setItem("aetheros_api_key", inputVal);
+                document.getElementById("auth-modal").classList.add("hidden");
+                location.reload();
+            } else {
+                alert("Please enter a valid API Key.");
+            }
+        }
+
+        async function secureFetch(url, options = {}) {
+            const apiKey = localStorage.getItem("aetheros_api_key") || "";
+            
+            options.headers = {
+                ...options.headers,
+                'Content-Type': 'application/json',
+                'X-API-Key': apiKey
+            };
+
+            const response = await fetch(url, options);
+            
+            if (response.status === 403) {
+                alert("Unauthorized access! The API Key is incorrect.");
+                localStorage.removeItem("aetheros_api_key");
+                document.getElementById("auth-modal").classList.remove("hidden");
+                throw new Error("Unauthorized (403)");
+            }
+            
+            return response;
+        }
+
         async function loadDevices() {
+            if (!checkAuth()) return;
+
             const container = document.getElementById('container');
             const status = document.getElementById('status');
             
             try {
-                const res = await fetch('/api/devices');
+                const res = await secureFetch('/api/devices');
                 const devices = await res.json();
 
                 status.innerText = `${devices.length} συσκευές`;
                 container.innerHTML = '';
 
                 if (devices.length === 0) {
-                    container.innerHTML = '<div class="empty">Δεν βρέθηκαν καταχωρισμένες συσκευές.</div>';
+                    container.innerHTML = '<div class="empty">No registered devices were found.</div>';
                     return;
                 }
 
@@ -212,7 +291,7 @@
                     const isTv = type.includes('tv') || brand === 'lg' || brand === 'samsung' || brand === "sony bravia" || brand === "roku";
                     const isAC = type.includes('daikin') || type.includes('gree') || type.includes("mitsubishi") || type.includes('ac') || brand === 'daikin' || brand === "gree" || brand === "mitsubishi";
                     const isPlug = type.includes('plug') || type.includes('p100') || type.includes('p110') || type.includes('p115');
-                    const isSpeaker = type.includes('sonos') || brand === "Sonos"
+                    const isSpeaker = type.includes('sonos') || brand === "sonos";
                     const isRestricted = brand === 'shelly' || brand === 'phue' || type.includes('shelly') || type.includes('phue');
                     const showBrightness = !isTv && !isAC && !isPlug && !isRestricted;
 
@@ -270,12 +349,9 @@
                                 <button onclick="send('/api/speaker/control', '${d.device_id}', '${d.device_type}', 'stop')">Stop</button>
                                 <button onclick="send('/api/speaker/control', '${d.device_id}', '${d.device_type}', 'volume_up')">Volume Up</button>
                                 <button onclick="send('/api/speaker/control', '${d.device_id}', '${d.device_type}', 'volume_down')">Volume Down</button>
-
                             </div>
-    
-                            <div class="warning-text">* Unsupp: BRP069C4x fw 2.0.0</div>
                         `;
-                    }  else {
+                    } else {
                         const endpoint = isPlug ? '/api/plug/control' : '/api/light/control';
                         html += `
                             <div class="controls">
@@ -298,25 +374,30 @@
                 });
 
             } catch (err) {
-                status.innerText = 'Σφάλμα σύνδεσης';
+                console.error(err);
+                status.innerText = 'Connection error or unauthorized access';
             }
         }
 
         async function send(endpoint, id, type, action, val = null) {
-            await fetch(endpoint, {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({
-                    device_id: id,
-                    dev_type: type,
-                    action: action,
-                    value: val,
-                    triggered_by: 'dashboard'
-                })
-            });
+            try {
+                await secureFetch(endpoint, {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        device_id: id,
+                        dev_type: type,
+                        action: action,
+                        value: val,
+                        triggered_by: 'dashboard'
+                    })
+                });
+            } catch (err) {
+                console.error("Failed to send command:", err);
+            }
         }
 
-        loadDevices();
+        // Εκκίνηση κατά τη φόρτωση
+        window.onload = loadDevices;
     </script>
 </body>
 </html>
