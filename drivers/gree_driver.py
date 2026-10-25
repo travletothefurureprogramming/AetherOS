@@ -20,20 +20,20 @@ class GreeAirCondition(BaseDevice):
        await self.device.bind()
 
     async def turn_on(self):
-        await self.device.power = True
+        self.device.power = True
         await self.device.push_state_update()
 
         return f"Successfully turned on the device: {self.device_id}"
 
     async def turn_off(self):
-        await self.device.power = False
+        self.device.power = False
         await self.device.push_state_update()
 
         return f"Successfully turned on the device: {self.device_id}"
 
     async def set_temperature(self, value:int):
-        await self.device.temperature_units = TemperatureUnits.C
-        await self.device.target_temperature = value
+        self.device.temperature_units = TemperatureUnits.C
+        self.device.target_temperature = value
         await self.device.push_state_update()
 
         return f"Succesfully set the temperature on the device: {self.device_id}"
@@ -46,13 +46,13 @@ class GreeAirCondition(BaseDevice):
 
         self.device.mode = Mode.Cool if value == "cool" else Mode.Heat if value == "heat" else Mode.Auto if value == "auto" else Mode.Dry if value == "dry" else None
 
-        self.device.push_state_update()
+        await self.device.push_state_update()
         return f"Succesfully set the mode on the device: {self.device_id}"
 
 
     async def get_state(self):
        
-        self.device.update_state()
+        await self.device.update_state()
         return {
             "online": True,
             "power": self.device.power == "ON",

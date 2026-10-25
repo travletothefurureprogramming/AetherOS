@@ -48,7 +48,6 @@ def main():
             choices=[
                 "🔌 Add / Register New Device",
                 "📋 View Registered Devices",
-                "🚀 Start API Server",
                 "❌ Exit",
             ],
             style=questionary.Style([
@@ -322,12 +321,6 @@ def main():
                         f" {d['device_type']} | IP: {d['ip_address']}{auth_info}{relay_info}{number_info}{psk_info}"
                     )
             input("\nPress Enter to continue...")
-
-        elif choice == "🚀 Start API Server":
-            print("\n[+] Starting API Server...")
-            print(f"\n[🚀] Starting Uvicorn Server on http://127.0.0.1:8080 and http://{get_local_ip()}:8080 ...")
-            uvicorn.run(app, host="0.0.0.0", port=8080)
-            break
 
         elif choice == "❌ Exit" or choice is None:
             print("\nGoodbye!")
