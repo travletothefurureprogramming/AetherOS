@@ -3,9 +3,8 @@ from drivers.base_device import BaseDevice
 
 class Shelly(BaseDevice):
     def __init__(self, device_id, dev_type, ip, relay):
-        super().__init__(device_id)
-        self.ip = ip
-        self.dev_type = dev_type
+        super().__init__(device_id, dev_type, ip)
+
         self.relay = relay
         self.device = ShellyPy.Shelly(self.ip)
 

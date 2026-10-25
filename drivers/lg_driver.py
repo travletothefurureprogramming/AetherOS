@@ -10,10 +10,8 @@ os.makedirs(CONFIG_DIR, exist_ok=True)
 
 class WebOSTv(BaseDevice):
     def __init__(self, device_id: str, dev_type: str, ip: str):
-        super().__init__(device_id)
-        self.device_id = device_id
-        self.dev_type = dev_type
-        self.ip = ip
+        super().__init__(device_id, dev_type, ip)
+
         self.device: WebOsClient = None
 
     async def connect(self):

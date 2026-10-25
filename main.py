@@ -110,7 +110,7 @@ async def control_light(command: ControlLightDevice):
   if device_id not in devices_db:
     if brand == "Yeelight" or dev_type.startswith("yee_"):
       try:
-        devices_db[device_id] = Yeelight_Light(device_id, ip_address, dev_type)
+        devices_db[device_id] = Yeelight_Light(device_id, dev_type, ip_address)
       except Exception as e:
         print(f"Could not connect to physical device {device_id}: {str(e)}")
         raise HTTPException(
@@ -183,7 +183,7 @@ async def control_light(command: ControlLightDevice):
         elif brand == "Shelly":
           devices_db[device_id] = Shelly(device_id, dev_type, ip_address, relay_number)
         elif brand == "Yeelight":
-          devices_db[device_id] = Yeelight_Light(device_id, ip_address, dev_type)
+          devices_db[device_id] = Yeelight_Light(device_id, dev_type, ip_address)
         elif brand == "Phue":
           devices_db[device_id] = Phue(device_id, dev_type, ip_address, device_number)
         elif brand == "Wiz":

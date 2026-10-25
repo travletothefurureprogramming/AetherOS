@@ -8,12 +8,10 @@ logging.basicConfig(level=logging.INFO)
 
 class SamsungTV(BaseDevice):
     def __init__(self, device_id:str, dev_type:str, ip:str):
-        super().__init__(device_id)
-        self.device_id = device_id
-        self.dev_type = dev_type
-        self.ip = ip
+        super().__init__(device_id, dev_type, ip)
 
-        token_file = os.path.join("cfg", f"samsung_{device_id}.txt")
+
+        token_file = os.path.join("cfg", f"samsung_{self.device_id}.txt")
         self.tv = SamsungTVWS(host=self.ip, port=8002, token_file=token_file)
 
 

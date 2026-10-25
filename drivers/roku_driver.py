@@ -5,12 +5,9 @@ import requests
 
 class RokuTV(BaseDevice):
     def __init__(self, device_id, dev_type, ip):
-        super().__init__(device_id)
-        self.device_id = device_id
-        self.dev_type = dev_type
-        self.ip = ip
+        super().__init__(device_id, dev_type, ip)
 
-        self.device = Roku(ip)
+        self.device = Roku(self.ip)
 
     def turn_on(self):
         self.device.home()

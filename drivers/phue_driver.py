@@ -3,10 +3,7 @@ from drivers.base_device import BaseDevice
 
 class Phue(BaseDevice):
     def __init__(self, device_id, dev_type, ip, device_number):
-        super().__init__(device_id)
-        self.device_id = device_id
-        self.dev_type = dev_type
-        self.ip = ip
+        super().__init__(device_id, dev_type, ip)
         self.device_number = device_number
         self.device = Bridge(ip)
         self.connect()

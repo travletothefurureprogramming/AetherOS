@@ -4,10 +4,9 @@ from drivers.base_device import BaseDevice
 
 
 class Yeelight_Light(BaseDevice):
-    def __init__(self, device_id:str, ip:str,  dev_type:str):
-        super().__init__(device_id)
-        self.device_id = device_id
-        self.dev_type = dev_type
+    def __init__(self, device_id:str, dev_type:str,  ip:str):
+        super().__init__(device_id, dev_type, ip)
+
         self.bulb = AsyncBulb(ip)
 
     async def turn_on(self) -> str:

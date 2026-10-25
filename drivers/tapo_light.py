@@ -9,7 +9,7 @@ load_dotenv("cfg/.env")
 class TapoLight(BaseDevice):
 
   def __init__(self, device_id: str, device_obj, ip_address: str, tapo_username: str, tapo_password: str):
-    super().__init__(device_id)
+    super().__init__(device_id, ip=ip_address, dev_type= self.dev_type)
     self.device = device_obj
     self.ip_address = ip_address
     self.tapo_username = tapo_username
