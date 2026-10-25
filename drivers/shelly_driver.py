@@ -8,10 +8,10 @@ class Shelly(BaseDevice):
         self.relay = relay
         self.device = ShellyPy.Shelly(self.ip)
 
-    def turn_on(self):
+    async def turn_on(self):
         self.device.relay(self.relay, turn=True)
         return  f"Successfully turned on the device: {self.device_id}"
 
-    def turn_off(self):
+    async def turn_off(self):
         self.device.relay(self.relay, turn=False)
         return  f"Successfully turned off the device: {self.device_id}"

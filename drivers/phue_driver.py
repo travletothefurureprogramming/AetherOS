@@ -8,14 +8,14 @@ class Phue(BaseDevice):
         self.device = Bridge(ip)
         self.connect()
 
-    def connect(self):
+    async def connect(self):
         self.device.connect()
 
-    def turn_on(self):
+    async def turn_on(self):
         self.device.set_light(self.device_number, 'on', True)
         return super().turn_on()
 
-    def turn_off(self):
+    async def turn_off(self):
         self.device.set_light(self.device_number, 'on', False)
         return super().turn_off()
 

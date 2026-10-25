@@ -9,25 +9,25 @@ class MitsubishiAirCondition(BaseDevice):
 
         self.device = mit.HomeAirConditioner(netif=ip)
 
-    def turn_on(self):
+    async def turn_on(self):
         self.device.update()
         self.device.on()
 
         return f"Successfully turned on the device: {self.device_id}"
 
-    def turn_off(self):
+    async def turn_off(self):
         self.device.update()
         self.device.off()
 
         return f"Successfully turned on the device: {self.device_id}"
 
-    def set_temperature(self, value:int):
+    async def set_temperature(self, value:int):
         self.device.update()
         self.device.setOperationalTemperature(value)
 
         return f"Succesfully set the temperature on the device: {self.device_id}"
 
-    def set_mode(self, value:str):
+    async def set_mode(self, value:str):
         modes = ["cool", "heat", "dry", "auto"]
 
         if value not in modes:

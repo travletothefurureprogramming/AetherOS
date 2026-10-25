@@ -11,41 +11,41 @@ class SonyBraviaTv(BaseDevice):
         self.device = Bravia(device_id, ip, f'http://{ip}/sony/', psk)
 
 
-    def turn_on(self):
+    async def turn_on(self):
         self.device.power(True)
         return  f"Successfully turned on the device: {self.device_id}"
 
-    def turn_off(self):
+    async def turn_off(self):
         self.device.power(False)
         return  f"Successfully turned off the device: {self.device_id}"
 
-    def set_volume(self, volume:int):
+    async def set_volume(self, volume:int):
         self.device.setVol(str(volume))
         return f"Successfully set volume to the device: {self.device_id}"
 
-    def volume_up(self):
+    async def volume_up(self):
         self.device.volUp()
         return f"Successfully volume up the device: {self.device_id}"
 
-    def volume_down(self):
+    async def volume_down(self):
         self.device.volDown()
         return f"Successfully volume down the device: {self.device_id}"
 
-    def play(self):
+    async def play(self):
         self.device.play()
         return  f"Successfully play media on the device: {self.device_id}"
 
-    def pause(self):
+    async def pause(self):
         self.device.pause()
         return  f"Successfully pause media on the device: {self.device_id}"
 
-    def stop(self):
+    async def stop(self):
         # !!!!!! For now stop is pause !!!!!
         self.device.pause()
         return  f"Successfully stop media on the device: {self.device_id}"
 
 
-    def select_source(self, source: str):
+    async def select_source(self, source: str):
 
         input_str = input_str.strip().lower()
         
