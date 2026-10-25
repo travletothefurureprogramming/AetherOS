@@ -31,7 +31,7 @@ def get_or_create_api_key() -> str:
 
     return new_key
 
-MASTER_API_KEY = get_or_create_api_key
+MASTER_API_KEY = get_or_create_api_key()
 
 async def verify_api_key(api_key: str = Security(api_key_header)):
 
