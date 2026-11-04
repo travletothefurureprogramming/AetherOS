@@ -1,7 +1,6 @@
 # AetherOS
 
-<img width="1852" height="630" alt="Screenshot 2026-10-25 232316" src="https://github.com/user-attachments/assets/8c5d9ca2-e3f2-449d-aec0-ab82e60220fc" />
-
+![Screenshot](images/screenshot.png)
 
 AetherOS is a local-first IoT hub designed for local device orchestration, automation, and control. Built with FastAPI, Python, and modern multi-brand device drivers.
 
